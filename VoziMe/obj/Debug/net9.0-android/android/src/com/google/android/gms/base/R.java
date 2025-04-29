@@ -13,7 +13,7 @@ public final class R {
 		public static final int colorScheme = 0x7f03012e;
 		public static final int imageAspectRatio = 0x7f03024f;
 		public static final int imageAspectRatioAdjust = 0x7f030250;
-		public static final int scopeUris = 0x7f0303da;
+		public static final int scopeUris = 0x7f0303db;
 	}
 	public static final class color {
 		public static final int common_google_signin_btn_text_dark = 0x7f050037;
@@ -86,7 +86,7 @@ public final class R {
 		public static final int LoadingImageView_circleCrop = 0;
 		public static final int LoadingImageView_imageAspectRatio = 1;
 		public static final int LoadingImageView_imageAspectRatioAdjust = 2;
-		public static final int[] SignInButton = new int[] { 0x7f03009e, 0x7f03012e, 0x7f0303da };
+		public static final int[] SignInButton = new int[] { 0x7f03009e, 0x7f03012e, 0x7f0303db };
 		public static final int SignInButton_buttonSize = 0;
 		public static final int SignInButton_colorScheme = 1;
 		public static final int SignInButton_scopeUris = 2;

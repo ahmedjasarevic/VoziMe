@@ -22,7 +22,7 @@ public partial class DriverSelectionPage : ContentPage
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
 
         InitializeMapAsync();
-        LoadDriversAsync();
+        
     }
 
     private async void InitializeMapAsync()
@@ -47,20 +47,55 @@ public partial class DriverSelectionPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Greška", $"Nije moguæe uèitati mapu: {ex.Message}", "OK");
+            await DisplayAlert("Greška", $"Nije moguće učitati mapu: {ex.Message}", "OK");
         }
     }
-
     private async Task LoadDriversAsync()
     {
         try
         {
             var drivers = await _driverService.GetNearbyDriversAsync(_currentLatitude, _currentLongitude);
+
+            // Provjera broja vozača
+            Console.WriteLine($"Broj vozača: {drivers.Count()}");
+
+            // Ako nema vozača, obavijestiti korisnika
+            if (drivers.Count() == 0)
+            {
+                await DisplayAlert("Nema vozača", "Trenutno nema vozača u vašoj blizini.", "OK");
+            }
+
+            // Dodavanje vozača u CollectionView
             DriversCollection.ItemsSource = drivers;
+
+            // Dodavanje pinova za vozače na mapu
+            foreach (var driver in drivers)
+            {
+                if (driver.Latitude != 0 && driver.Longitude != 0)
+                {
+                    var driverLocation = new Location(driver.Latitude, driver.Longitude);
+
+                    // Provjerite da li već postoji pin za vozača
+                    var existingPin = LocationMap.Pins.FirstOrDefault(pin => pin.Label == driver.Name);
+                    if (existingPin == null)
+                    {
+                        var pin = new Pin
+                        {
+                            Label = driver.Name,
+                            Address = "Nema adrese", // Dodajte odgovarajući opis
+                            Type = PinType.Place,
+                            Location = driverLocation
+                        };
+
+                        LocationMap.Pins.Add(pin);
+                        Console.WriteLine($"Dodavanje pin-a za: {driver.Name}"); // Provjera dodavanja pinova
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Greška", $"Nije moguæe uèitati vozaèe: {ex.Message}", "OK");
+            await DisplayAlert("Greška", $"Greška pri učitavanju vozača: {ex.Message}", "OK");
         }
     }
 
@@ -96,51 +131,67 @@ public partial class DriverSelectionPage : ContentPage
             }
         }
     }
-
-    private async void OnDriverSelected(object sender, SelectionChangedEventArgs e)
+    private async Task HandleDriverSelection(Driver selectedDriver)
     {
-        if (e.CurrentSelection.FirstOrDefault() is Driver selectedDriver)
+        var destination = DestinationEntry.Text;
+
+        if (string.IsNullOrWhiteSpace(destination))
         {
-            bool confirm = await DisplayAlert(
-                "Potvrda",
-                $"Da li želite naruèiti vožnju sa vozaèem {selectedDriver.Name}?",
-                "Da", "Ne");
+            await DisplayAlert("Greška", "Molimo unesite destinaciju prije nego što naručite vožnju.", "OK");
+            return;
+        }
 
-            if (confirm)
+        var destinationLocations = await Geocoding.GetLocationsAsync(destination);
+        var destinationLocation = destinationLocations?.FirstOrDefault();
+
+        if (destinationLocation == null)
+        {
+            await DisplayAlert("Greška", "Nismo mogli pronaći unesenu destinaciju.", "OK");
+            return;
+        }
+
+        bool confirm = await DisplayAlert(
+            "Potvrda",
+            $"Naručiti vožnju sa vozačem {selectedDriver.Name} prema: {destination}?",
+            "Da", "Ne");
+
+        if (confirm)
+        {
+            try
             {
-                try
+                bool success = await _driverService.BookRideAsync(
+                    _userService.CurrentUser.Id,
+                    selectedDriver.Id,
+                    _currentLatitude,
+                    _currentLongitude,
+                    SourceEntry.Text ?? "Trenutna lokacija",
+                    destinationLocation.Latitude,
+                    destinationLocation.Longitude,
+                    destination);
+
+                if (success)
                 {
-                    // Get destination address
-                    string destinationAddress = "Radakovo"; // Default or from UI
-
-                    // Book the ride
-                    bool success = await _driverService.BookRideAsync(
-                        _userService.CurrentUser.Id,
-                        selectedDriver.Id,
-                        _currentLatitude,
-                        _currentLongitude,
-                        SourceEntry.Text ?? "Fast Food King 2",
-                        selectedDriver.Latitude, // For demo, we'll use driver's location as destination
-                        selectedDriver.Longitude,
-                        destinationAddress);
-
-                    if (success)
-                    {
-                        await DisplayAlert("Uspjeh", "Vožnja je naruèena. Vozaè æe uskoro stiæi.", "OK");
-                    }
-                    else
-                    {
-                        await DisplayAlert("Greška", "Nije moguæe naruèiti vožnju. Pokušajte ponovo.", "OK");
-                    }
+                    await DisplayAlert("Uspjeh", "Vožnja je naručena. Vozač će uskoro stići.", "OK");
+                    await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude)));
                 }
-                catch (Exception ex)
+                else
                 {
-                    await DisplayAlert("Greška", $"Došlo je do greške: {ex.Message}", "OK");
+                    await DisplayAlert("Greška", "Nije moguće naručiti vožnju. Pokušajte ponovo.", "OK");
                 }
             }
-
-            // Clear selection
-            DriversCollection.SelectedItem = null;
+            catch (Exception ex)
+            {
+                await DisplayAlert("Greška", $"Greška pri naručivanju: {ex.Message}", "OK");
+            }
         }
     }
+
+    private async void DriverCard_Tapped(object sender, EventArgs e)
+    {
+        if (sender is Frame frame && frame.BindingContext is Driver selectedDriver)
+        {
+            await HandleDriverSelection(selectedDriver);
+        }
+    }
+
 }

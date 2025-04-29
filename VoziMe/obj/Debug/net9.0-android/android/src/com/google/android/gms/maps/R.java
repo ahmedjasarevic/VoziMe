@@ -25,16 +25,16 @@ public final class R {
 		public static final int mapColorScheme = 0x7f0302f4;
 		public static final int mapId = 0x7f0302f5;
 		public static final int mapType = 0x7f0302f6;
-		public static final int uiCompass = 0x7f0304fe;
-		public static final int uiMapToolbar = 0x7f0304ff;
-		public static final int uiRotateGestures = 0x7f030500;
-		public static final int uiScrollGestures = 0x7f030501;
-		public static final int uiScrollGesturesDuringRotateOrZoom = 0x7f030502;
-		public static final int uiTiltGestures = 0x7f030503;
-		public static final int uiZoomControls = 0x7f030504;
-		public static final int uiZoomGestures = 0x7f030505;
-		public static final int useViewLifecycle = 0x7f03050b;
-		public static final int zOrderOnTop = 0x7f03052a;
+		public static final int uiCompass = 0x7f0304ff;
+		public static final int uiMapToolbar = 0x7f030500;
+		public static final int uiRotateGestures = 0x7f030501;
+		public static final int uiScrollGestures = 0x7f030502;
+		public static final int uiScrollGesturesDuringRotateOrZoom = 0x7f030503;
+		public static final int uiTiltGestures = 0x7f030504;
+		public static final int uiZoomControls = 0x7f030505;
+		public static final int uiZoomGestures = 0x7f030506;
+		public static final int useViewLifecycle = 0x7f03050c;
+		public static final int zOrderOnTop = 0x7f03052b;
 	}
 	public static final class id {
 		public static final int dark = 0x7f080095;
@@ -47,7 +47,7 @@ public final class R {
 		public static final int terrain = 0x7f0801de;
 	}
 	public static final class styleable {
-		public static final int[] MapAttrs = new int[] { 0x7f030035, 0x7f03004f, 0x7f0300a3, 0x7f0300a4, 0x7f0300a5, 0x7f0300a6, 0x7f0300a7, 0x7f0300a8, 0x7f0300a9, 0x7f03028b, 0x7f03028c, 0x7f03028d, 0x7f03028e, 0x7f0302ef, 0x7f0302f4, 0x7f0302f5, 0x7f0302f6, 0x7f0304fe, 0x7f0304ff, 0x7f030500, 0x7f030501, 0x7f030502, 0x7f030503, 0x7f030504, 0x7f030505, 0x7f03050b, 0x7f03052a };
+		public static final int[] MapAttrs = new int[] { 0x7f030035, 0x7f03004f, 0x7f0300a3, 0x7f0300a4, 0x7f0300a5, 0x7f0300a6, 0x7f0300a7, 0x7f0300a8, 0x7f0300a9, 0x7f03028b, 0x7f03028c, 0x7f03028d, 0x7f03028e, 0x7f0302ef, 0x7f0302f4, 0x7f0302f5, 0x7f0302f6, 0x7f0304ff, 0x7f030500, 0x7f030501, 0x7f030502, 0x7f030503, 0x7f030504, 0x7f030505, 0x7f030506, 0x7f03050c, 0x7f03052b };
 		public static final int MapAttrs_ambientEnabled = 0;
 		public static final int MapAttrs_backgroundColor = 1;
 		public static final int MapAttrs_cameraBearing = 2;
