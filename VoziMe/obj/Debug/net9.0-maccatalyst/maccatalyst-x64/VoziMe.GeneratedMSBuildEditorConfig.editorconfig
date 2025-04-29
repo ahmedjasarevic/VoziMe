@@ -66,6 +66,12 @@ build_metadata.AdditionalFiles.ManifestResourceName = VoziMe.Views.RegisterPage.
 build_metadata.AdditionalFiles.TargetPath = Views\RegisterPage.xaml
 build_metadata.AdditionalFiles.RelativePath = Views\RegisterPage.xaml
 
+[C:/Users/K/Desktop/VoziMe/VoziMe/Views/RideTrackingPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = VoziMe.Views.RideTrackingPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\RideTrackingPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\RideTrackingPage.xaml
+
 [C:/Users/K/Desktop/VoziMe/VoziMe/Views/SplashPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = VoziMe.Views.SplashPage.xaml

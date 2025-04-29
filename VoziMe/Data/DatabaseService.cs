@@ -168,9 +168,7 @@ CreateRidesTableAsync(SqliteConnection connection)
         }
     }
 
-    private async Task
-
-    AddSampleDriversAsync(SqliteConnection connection)
+    private async Task AddSampleDriversAsync(SqliteConnection connection)
     {
         var getUsersCommand = connection.CreateCommand();
         getUsersCommand.CommandText = "SELECT Id, Name FROM Users WHERE UserType = $UserType";

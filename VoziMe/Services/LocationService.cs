@@ -40,6 +40,17 @@ public class LocationService
         }
     }
 
+    public async Task<Location> GetDriverLocationAsync(string driverId)
+    {
+        // TODO: Real API poziv
+        await Task.Delay(500); // simulacija
+
+        // For now, return slightly moved position for simulation
+        return new Location(
+            Random.Shared.NextDouble() * 0.01 + 44.2, // simulacija
+            Random.Shared.NextDouble() * 0.01 + 17.9);
+    }
+
     public async Task<string> GetAddressFromCoordinatesAsync(double latitude, double longitude)
     {
         try

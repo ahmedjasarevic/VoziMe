@@ -1,27 +1,41 @@
-﻿using System.Data.SqlClient;
+﻿using Microsoft.Data.Sqlite;
 using VoziMe.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace VoziMe.Services;
 
 public class DriverService
 {
-    private readonly string _connectionString = "Server=your_server;Database=VoziMe;User Id=your_username;Password=your_password;";
+    private readonly string _connectionString;
+
+    public DriverService()
+    {
+        var databasePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "vozi_me.db");
+        _connectionString = $"Data Source={databasePath}";
+    }
 
     public async Task<List<Driver>> GetNearbyDriversAsync(double latitude, double longitude, double radiusKm = 5.0)
     {
+        var drivers = new List<Driver>();
+
         try
         {
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
 
-            var command = new SqlCommand(@"
+            var command = connection.CreateCommand();
+            command.CommandText = @"
                 SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.IsAvailable
                 FROM Drivers d
                 JOIN Users u ON d.UserId = u.Id
-                WHERE d.IsAvailable = 1",
-                connection);
+                WHERE d.IsAvailable = 1;
+            ";
 
-            var drivers = new List<Driver>();
             using var reader = await command.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
@@ -29,13 +43,11 @@ public class DriverService
                 var driverLatitude = reader.GetDouble(reader.GetOrdinal("Latitude"));
                 var driverLongitude = reader.GetDouble(reader.GetOrdinal("Longitude"));
 
-                // Calculate distance
                 var distance = CalculateDistance(latitude, longitude, driverLatitude, driverLongitude);
 
-                // Only include drivers within the radius
                 if (distance <= radiusKm)
                 {
-                    var timeEstimate = Math.Max(2, (int)(distance * 2)); // Rough estimate: 2 min per km
+                    var timeEstimate = Math.Max(2, (int)(distance * 2));
 
                     drivers.Add(new Driver
                     {
@@ -51,18 +63,17 @@ public class DriverService
                         Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
                         Latitude = driverLatitude,
                         Longitude = driverLongitude,
-                        IsAvailable = reader.GetBoolean(reader.GetOrdinal("IsAvailable"))
+                        IsAvailable = reader.GetInt32(reader.GetOrdinal("IsAvailable")) == 1
                     });
                 }
             }
-
-            return drivers;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"GetNearbyDrivers error: {ex.Message}");
-            return new List<Driver>();
         }
+
+        return drivers;
     }
 
     public async Task<bool> BookRideAsync(int customerId, int driverId,
@@ -71,22 +82,21 @@ public class DriverService
     {
         try
         {
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
 
-            // Calculate distance and price
             var distance = CalculateDistance(sourceLatitude, sourceLongitude, destLatitude, destLongitude);
             var price = decimal.Parse(CalculatePrice(distance).Replace("KM", ""));
 
-            // Create ride record
-            var command = new SqlCommand(@"
+            var command = connection.CreateCommand();
+            command.CommandText = @"
                 INSERT INTO Rides (CustomerId, DriverId, SourceLatitude, SourceLongitude, SourceAddress,
-                                  DestinationLatitude, DestinationLongitude, DestinationAddress, Price, Status)
+                                   DestinationLatitude, DestinationLongitude, DestinationAddress, Price, Status)
                 VALUES (@CustomerId, @DriverId, @SourceLat, @SourceLong, @SourceAddr,
                         @DestLat, @DestLong, @DestAddr, @Price, @Status);
-                
-                UPDATE Drivers SET IsAvailable = 0 WHERE Id = @DriverId;",
-                connection);
+
+                UPDATE Drivers SET IsAvailable = 0 WHERE Id = @DriverId;
+            ";
 
             command.Parameters.AddWithValue("@CustomerId", customerId);
             command.Parameters.AddWithValue("@DriverId", driverId);
@@ -105,6 +115,34 @@ public class DriverService
         catch (Exception ex)
         {
             Console.WriteLine($"BookRide error: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> CompleteRideAsync(int rideId, int driverId)
+    {
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+            UPDATE Rides SET Status = @Status, CompletedAt = CURRENT_TIMESTAMP WHERE Id = @RideId;
+
+            UPDATE Drivers SET IsAvailable = 1 WHERE Id = @DriverId;
+        ";
+
+            command.Parameters.AddWithValue("@Status", (int)RideStatus.Completed); // Završena vožnja
+            command.Parameters.AddWithValue("@RideId", rideId);
+            command.Parameters.AddWithValue("@DriverId", driverId);
+
+            await command.ExecuteNonQueryAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"CompleteRide error: {ex.Message}");
             return false;
         }
     }
