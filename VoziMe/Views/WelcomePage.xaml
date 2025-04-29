@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VoziMe.Views.WelcomePage"
+             BackgroundColor="{StaticResource BackgroundColor}"
+             NavigationPage.HasNavigationBar="False">
+    <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
+        <Frame BackgroundColor="{StaticResource PrimaryColor}"
+               CornerRadius="60"
+               HeightRequest="200"
+               WidthRequest="200"
+               HorizontalOptions="Center"
+               Padding="0"
+               HasShadow="False">
+            <Grid>
+                <Image Source="taxi_logo.png" 
+                       HeightRequest="100" 
+                       WidthRequest="100"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+                <Label Text="VoziMe"
+                       TextColor="Black"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="End"
+                       Margin="0,0,0,30"/>
+            </Grid>
+        </Frame>
+
+        <VerticalStackLayout Spacing="5" Margin="0,20,0,30">
+            <Label Text="DOBRODOŠLI"
+                   TextColor="{StaticResource TextColor}"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Label Text="Prijavite se kao"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   FontSize="16"
+                   HorizontalOptions="Center" />
+        </VerticalStackLayout>
+
+        <Button Text="Korisnik"
+                Style="{StaticResource PrimaryButton}"
+                ImageSource="user_icon.png"
+                ContentLayout="Left,15"
+                Clicked="OnUserButtonClicked" />
+
+        <Button Text="Vozač"
+                Style="{StaticResource PrimaryButton}"
+                ImageSource="car_icon.png"
+                ContentLayout="Left,15"
+                Margin="0,15,0,0"
+                Clicked="OnDriverButtonClicked" />
+    </VerticalStackLayout>
+</ContentPage>

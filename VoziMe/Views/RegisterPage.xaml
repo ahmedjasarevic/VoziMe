@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VoziMe.Views.RegisterPage"
+             BackgroundColor="{StaticResource BackgroundColor}"
+             NavigationPage.HasNavigationBar="False">
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
+            <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                   CornerRadius="60"
+                   HeightRequest="180"
+                   WidthRequest="180"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,30"
+                   Padding="0"
+                   HasShadow="False">
+                <Grid>
+                    <Image Source="taxi_logo.png" 
+                           HeightRequest="90" 
+                           WidthRequest="90"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                    <Label Text="VoziMe"
+                           TextColor="Black"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="End"
+                           Margin="0,0,0,25"/>
+                </Grid>
+            </Frame>
+
+            <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,*">
+                <Image Grid.Column="0" Source="user_icon.png" HeightRequest="20" WidthRequest="20" VerticalOptions="Center" />
+                <Entry Grid.Column="1" 
+                       x:Name="NameEntry"
+                       Placeholder="Ime i prezime"
+                       Style="{StaticResource EntryStyle}"
+                       Margin="10,0,0,0" />
+            </Grid>
+            <BoxView HeightRequest="1" Color="#444444" />
+
+            <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,*">
+                <Image Grid.Column="0" Source="email_icon.png" HeightRequest="20" WidthRequest="20" VerticalOptions="Center" />
+                <Entry Grid.Column="1" 
+                       x:Name="EmailEntry"
+                       Placeholder="email@email.com"
+                       Keyboard="Email"
+                       Style="{StaticResource EntryStyle}"
+                       Margin="10,0,0,0" />
+            </Grid>
+            <BoxView HeightRequest="1" Color="#444444" />
+
+            <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,*">
+                <Image Grid.Column="0" Source="lock_icon.png" HeightRequest="20" WidthRequest="20" VerticalOptions="Center" />
+                <Entry Grid.Column="1" 
+                       x:Name="PasswordEntry"
+                       Placeholder="****************"
+                       IsPassword="True"
+                       Style="{StaticResource EntryStyle}"
+                       Margin="10,0,0,0" />
+            </Grid>
+            <BoxView HeightRequest="1" Color="#444444" />
+
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20" Margin="0,20,0,0">
+                <ImageButton Source="google_icon.png" 
+                             HeightRequest="40" 
+                             WidthRequest="40"
+                             BackgroundColor="White"
+                             CornerRadius="20"
+                             Clicked="OnGoogleSignupClicked" />
+
+                <ImageButton Source="facebook_icon.png" 
+                             HeightRequest="40" 
+                             WidthRequest="40"
+                             BackgroundColor="#1877F2"
+                             CornerRadius="20"
+                             Clicked="OnFacebookSignupClicked" />
+            </HorizontalStackLayout>
+
+            <Button Text="Registruj se"
+                    Style="{StaticResource PrimaryButton}"
+                    Margin="0,20,0,0"
+                    Clicked="OnRegisterButtonClicked" />
+
+            <Label Text="Prijavite se"
+                   TextColor="{StaticResource TextColor}"
+                   HorizontalOptions="Center"
+                   Margin="0,10,0,0">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLoginLabelTapped" />
+                </Label.GestureRecognizers>
+            </Label>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VoziMe.Views.SplashPage"
+             BackgroundColor="{StaticResource BackgroundColor}"
+             NavigationPage.HasNavigationBar="False">
+    <Grid>
+        <Frame BackgroundColor="{StaticResource PrimaryColor}"
+               CornerRadius="60"
+               HeightRequest="200"
+               WidthRequest="200"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Padding="0"
+               HasShadow="False">
+            <Grid>
+                <Image Source="taxi_logo.png" 
+                       HeightRequest="100" 
+                       WidthRequest="100"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+                <Label Text="VoziMe"
+                       TextColor="Black"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="End"
+                       Margin="0,0,0,30"/>
+            </Grid>
+        </Frame>
+    </Grid>
+</ContentPage>
