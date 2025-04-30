@@ -6,17 +6,21 @@ using VoziMe;
 
 namespace VoziMe;
 
+
 public partial class MainPage : ContentPage
 {
-    public MainPage()
+    private readonly DatabaseService _databaseService;
+
+    // Inject DatabaseService using constructor dependency injection
+    public MainPage(DatabaseService databaseService)
     {
         InitializeComponent();
+        _databaseService = databaseService;
         InitializeDatabase();
     }
 
     private async void InitializeDatabase()
     {
-        var databaseService = new DatabaseService();
-        await databaseService.InitializeDatabaseAsync();
+        await _databaseService.InitializeDatabaseAsync();
     }
 }

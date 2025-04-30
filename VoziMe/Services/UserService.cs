@@ -1,147 +1,136 @@
-﻿
-using Microsoft.Data.Sqlite;
-using VoziMe.Models;
-using System.IO; // Dodato za Path.Combine
+﻿using VoziMe.Models;
+using Npgsql;
+using System;
+using System.IO; // For Path.Combine
 
-namespace VoziMe.Services;
-
-public class UserService
+namespace VoziMe.Services
 {
-    private readonly string _connectionString;
-
-    public UserService()
+    public class UserService
     {
-        var databasePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "vozi_me.db");
-        _connectionString = $"Data Source={databasePath}";
+        private readonly string _connectionString;
 
-    }
-
-    private User _currentUser;
-
-    public User CurrentUser => _currentUser;
-
-    public async Task<bool> LoginAsync(string email, string password, UserType userType)
-    {
-        try
+        public UserService()
         {
-            using var connection = new SqliteConnection(_connectionString);
-            await connection.OpenAsync();
+            // PostgreSQL connection string setup
+            _connectionString = "User Id=postgres.vfqrsstbgqfwukfgslyo;Password=SanidMuhic123;Server=aws-0-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres";
 
-            var command = new SqliteCommand(
-                "SELECT * FROM Users WHERE Email = @Email AND UserType = @UserType",
+        }
 
-                connection);
-            command.Parameters.AddWithValue("@Email", email);
-            command.Parameters.AddWithValue("@UserType", (int)userType);
+        private User _currentUser;
 
-            using var reader = await command.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+        public User CurrentUser => _currentUser;
+
+        public async Task<bool> LoginAsync(string email, string password, UserType userType)
+        {
+            try
             {
-                var storedHash = reader.GetString(reader.GetOrdinal("PasswordHash"));
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-                if (BCrypt.Net.BCrypt.Verify(password, storedHash))
+                var command = new NpgsqlCommand(
+                    "SELECT * FROM Users WHERE Email = @Email AND UserType = @UserType",
+                    connection);
+                command.Parameters.AddWithValue("@Email", email);
+                command.Parameters.AddWithValue("@UserType", (int)userType);
+
+                using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
                 {
-                    _currentUser = new User
+                    var storedHash = reader.GetString(reader.GetOrdinal("PasswordHash"));
 
+                    if (BCrypt.Net.BCrypt.Verify(password, storedHash))
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        Name = reader.GetString(reader.GetOrdinal("Name")),
-                        Email = reader.GetString(reader.GetOrdinal("Email")),
-                        UserType = (UserType)reader.GetInt32(reader.GetOrdinal("UserType")),
-                        ProfileImage = reader.IsDBNull(reader.GetOrdinal("ProfileImage"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("ProfileImage"))
-                    };
+                        _currentUser = new User
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Email = reader.GetString(reader.GetOrdinal("Email")),
+                            UserType = (UserType)reader.GetInt32(reader.GetOrdinal("UserType")),
+                            ProfileImage = reader.IsDBNull(reader.GetOrdinal("ProfileImage"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("ProfileImage"))
+                        };
 
-                    return true;
+                        return true;
+                    }
                 }
+
+                return false;
             }
-
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Login error: {ex.Message}");
-            return false;
-        }
-    }
-
-    public async Task<bool> RegisterAsync(string name, string email, string password, UserType userType)
-    {
-        try
-        {
-            using var connection = new
-
-SqliteConnection(_connectionString);
-            await connection.OpenAsync();
-
-            // Check if user already exists
-            var checkCommand = new SqliteCommand(
-                "SELECT COUNT(*) FROM Users WHERE Email = @Email",
-                connection);
-            checkCommand.Parameters.AddWithValue("@Email", email);
-
-            var count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
-            if (count > 0)
+            catch (Exception ex)
             {
-                throw new Exception("Korisnik sa ovom email adresom već postoji");
+                Console.WriteLine($"Login error: {ex.Message}");
+                return false;
             }
+        }
 
-            // Hash password
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        public async Task<bool> RegisterAsync(string name, string email, string password, UserType userType)
+        {
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            // Insert new user
-            var insertCommand = new SqliteCommand(@"
+                // Check if a user with the same email exists
+                var checkCommand = new NpgsqlCommand(
+                    "SELECT COUNT(*) FROM Users WHERE Email = @Email",
+                    connection);
+                checkCommand.Parameters.AddWithValue("@Email", email);
+
+                var count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
+                if (count > 0)
+                {
+                    // If user exists, return false
+                    throw new Exception("A user with this email already exists");
+                }
+
+                // Proceed with registration if no user with this email exists
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+
+                var insertCommand = new NpgsqlCommand(@"
                 INSERT INTO Users (Name, Email, PasswordHash, UserType, ProfileImage)
-                VALUES (@Name, @Email, @PasswordHash, @UserType, @ProfileImage);
-                SELECT last_insert_rowid();",
+                VALUES (@Name, @Email, @PasswordHash, @UserType, @ProfileImage)
+                RETURNING Id;",
                 connection);
 
-            insertCommand.Parameters.AddWithValue("@Name", name);
-            insertCommand.Parameters.AddWithValue
+                insertCommand.Parameters.AddWithValue("@Name", name);
+                insertCommand.Parameters.AddWithValue("@Email", email);
+                insertCommand.Parameters.AddWithValue("@PasswordHash", passwordHash);
+                insertCommand.Parameters.AddWithValue("@UserType", (int)userType);
+                insertCommand.Parameters.AddWithValue("@ProfileImage", "profile_placeholder.png");
 
-("@Email", email);
-            insertCommand.Parameters.AddWithValue("@PasswordHash", passwordHash);
-            insertCommand.Parameters.AddWithValue("@UserType", (int)userType);
-            insertCommand.Parameters.AddWithValue("@ProfileImage", "profile_placeholder.png");
+                var userId = (int)await insertCommand.ExecuteScalarAsync();
 
-            var userId = Convert.ToInt32(await insertCommand.ExecuteScalarAsync());
-
-            // If registering as a driver, add driver details
-            if (userType == UserType.Driver)
-            {
-                var driverCommand = new SqliteCommand(@"
-
+                // If user is a driver, add driver details
+                if (userType == UserType.Driver)
+                {
+                    var driverCommand = new NpgsqlCommand(@"
                     INSERT INTO Drivers (UserId, Car, Latitude, Longitude, Rating, IsAvailable)
                     VALUES (@UserId, @Car, @Latitude, @Longitude, @Rating, @IsAvailable);",
                     connection);
 
-                driverCommand.Parameters.AddWithValue("@UserId", userId);
-                driverCommand.Parameters.AddWithValue("@Car", "Nije specificirano");
-                driverCommand.Parameters.AddWithValue("@Latitude", 44.2037); // Default location
-                driverCommand.Parameters.AddWithValue("@Longitude", 17.9071);
+                    driverCommand.Parameters.AddWithValue("@UserId", userId);
+                    driverCommand.Parameters.AddWithValue("@Car", "Not specified");
+                    driverCommand.Parameters.AddWithValue("@Latitude", 44.2037); // Default location
+                    driverCommand.Parameters.AddWithValue("@Longitude", 17.9071);
+                    driverCommand.Parameters.AddWithValue("@Rating", 0);
+                    driverCommand.Parameters.AddWithValue("@IsAvailable", 1);
 
+                    await driverCommand.ExecuteNonQueryAsync();
+                }
 
-                driverCommand.Parameters.AddWithValue("@Rating", 0);
-                driverCommand.Parameters.AddWithValue("@IsAvailable", 1);
-
-                await driverCommand.ExecuteNonQueryAsync();
+                return true;
             }
-
-            return true;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Registration error: {ex.Message}");
+                throw;
+            }
         }
-        catch (Exception ex)
+
+        public void Logout()
         {
-            Console.WriteLine($"Registration error: {ex.Message}");
-            throw;
+            _currentUser = null;
         }
-    }
-
-    public void Logout()
-
-    {
-        _currentUser = null;
     }
 }
