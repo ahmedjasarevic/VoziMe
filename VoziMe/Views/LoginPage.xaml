@@ -6,28 +6,14 @@
              NavigationPage.HasNavigationBar="False">
     <ScrollView>
         <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
-            <Frame BackgroundColor="{StaticResource PrimaryColor}"
-                   CornerRadius="60"
-                   HeightRequest="180"
-                   WidthRequest="180"
-                   HorizontalOptions="Center"
-                   Margin="0,0,0,30"
-                   Padding="0"
-                   HasShadow="False">
-                <Grid>
+            <Frame >
+                
                     <Image Source="taxi_logo.png" 
-                           HeightRequest="90" 
-                           WidthRequest="90"
+                           HeightRequest="300" 
+                           WidthRequest="250"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"/>
-                    <Label Text="VoziMe"
-                           TextColor="Black"
-                           FontSize="24"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           VerticalOptions="End"
-                           Margin="0,0,0,25"/>
-                </Grid>
+                   
             </Frame>
 
             <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,*">
