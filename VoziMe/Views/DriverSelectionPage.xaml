@@ -82,7 +82,7 @@ Clicked="ShowDriversButton_Clicked" />
                                         <Image Source="{Binding ProfileImage}" Aspect="AspectFill" />
                                     </Frame>
                                     <VerticalStackLayout Grid.Column="1" Margin="10,0,0,0">
-                                        <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" />
+                                        <Label Text="{Binding Name}" TextColor="Black" FontAttributes="Bold" />
                                         <Label Text="{Binding Car}" TextColor="#aaa" FontSize="12" />
                                         <Label Text="{Binding Price, StringFormat='Cijena: {0}KM'}" TextColor="#aaa" FontSize="12" />
                                     </VerticalStackLayout>
