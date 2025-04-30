@@ -22,7 +22,15 @@
                 <Label x:Name="DriverNameLabel" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
                 <Label x:Name="CarInfoLabel" FontSize="14" TextColor="Gray"/>
                 <Label x:Name="EtaLabel" FontSize="14" TextColor="Green"/>
+                <Button Text="Završi vožnju"
+        Clicked="FinishRideButton_Clicked"
+        BackgroundColor="Green"
+        TextColor="White"
+        Margin="20"
+        VerticalOptions="End"/>
+
             </StackLayout>
+            
         </Frame>
     </Grid>
 </ContentPage>

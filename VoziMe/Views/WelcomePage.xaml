@@ -5,27 +5,16 @@
              BackgroundColor="{StaticResource BackgroundColor}"
              NavigationPage.HasNavigationBar="False">
     <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
-        <Frame BackgroundColor="{StaticResource PrimaryColor}"
-               CornerRadius="60"
-               HeightRequest="200"
-               WidthRequest="200"
-               HorizontalOptions="Center"
-               Padding="0"
-               HasShadow="False">
-            <Grid>
-                <Image Source="taxi_logo.png" 
-                       HeightRequest="100" 
-                       WidthRequest="100"
+        <Frame CornerRadius="25" >
+
+            <Image Source="taxi_logo.png" 
+                   
+                       HeightRequest="250" 
+                       WidthRequest="250"
                        HorizontalOptions="Center"
                        VerticalOptions="Center"/>
-                <Label Text="VoziMe"
-                       TextColor="Black"
-                       FontSize="28"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"
-                       VerticalOptions="End"
-                       Margin="0,0,0,30"/>
-            </Grid>
+                
+           
         </Frame>
 
         <VerticalStackLayout Spacing="5" Margin="0,20,0,30">

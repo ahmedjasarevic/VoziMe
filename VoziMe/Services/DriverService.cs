@@ -175,4 +175,41 @@ public class DriverService
         var totalPrice = basePrice + (distanceKm * pricePerKm);
         return $"{Math.Round(totalPrice)}KM";
     }
+    public async Task<bool> FinishRideAsync(int driverId)
+    {
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+
+            // 1. Osvježi drivera kao dostupnog
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+            UPDATE Drivers
+            SET IsAvailable = 1
+            WHERE Id = $DriverId;";
+            command.Parameters.AddWithValue("$DriverId", driverId);
+
+            await command.ExecuteNonQueryAsync();
+
+            // 2. (Opcionalno) Osvježi zadnju vožnju kao završenu
+            var updateRideCommand = connection.CreateCommand();
+            updateRideCommand.CommandText = @"
+            UPDATE Rides
+            SET Status = 1,
+                CompletedAt = CURRENT_TIMESTAMP
+            WHERE DriverId = $DriverId AND Status = 0;";
+            updateRideCommand.Parameters.AddWithValue("$DriverId", driverId);
+
+            await updateRideCommand.ExecuteNonQueryAsync();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Greška prilikom završavanja vožnje: {ex.Message}");
+            return false;
+        }
+    }
+
 }
