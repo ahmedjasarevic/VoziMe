@@ -14,13 +14,16 @@ public partial class RideTrackingPage : ContentPage
 
     private Pin _driverPin;
     private bool _isDriverArrived;
+    private int _selectedRating = 0;
+    private int _currentUserId; // Dodano polje za korisnički ID
 
-    public RideTrackingPage(Driver driver, Location pickupLocation)
+    public RideTrackingPage(Driver driver, Location pickupLocation, int currentUserId)
     {
         InitializeComponent();
 
         _driver = driver;
         _pickupLocation = pickupLocation;
+        _currentUserId = currentUserId; // Postavi korisnički ID
 
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
@@ -79,7 +82,6 @@ public partial class RideTrackingPage : ContentPage
 
             if (distance > 0.05)
             {
-                var step = distance * 0.1;
                 var newLat = updatedLocation.Latitude + ((_pickupLocation.Latitude - updatedLocation.Latitude) * 0.05);
                 var newLong = updatedLocation.Longitude + ((_pickupLocation.Longitude - updatedLocation.Longitude) * 0.05);
                 updatedLocation = new Location(newLat, newLong);
@@ -106,13 +108,69 @@ public partial class RideTrackingPage : ContentPage
         bool success = await _driverService.FinishRideAsync(_driver.Id);
         if (success)
         {
-            await DisplayAlert("Vožnja završena", "Vozač je sada ponovo dostupan.", "OK");
-            await Navigation.PushAsync(new DriverSelectionPage());
+            await DisplayAlert("Vožnja završena", "Vozač je sada ponovo dostupan. Ocijenite vožnju!", "OK");
 
+            ShowRatingStars(); // Prikaz zvjezdica
         }
         else
         {
             await DisplayAlert("Greška", "Došlo je do greške prilikom završavanja vožnje.", "OK");
+        }
+    }
+
+    private void ShowRatingStars()
+    {
+        RatingView.IsVisible = true;
+        StarContainer.Children.Clear();
+
+        for (int i = 1; i <= 5; i++)
+        {
+            var star = new Image
+            {
+                Source = "star_empty.png",
+                HeightRequest = 30,
+                WidthRequest = 30,
+                Margin = new Thickness(5)
+            };
+
+            int rating = i;
+            var tapGesture = new TapGestureRecognizer();
+            tapGesture.Tapped += async (s, e) =>
+            {
+                _selectedRating = rating;
+                UpdateStarImages(rating);
+                await SubmitRatingAsync();
+            };
+
+            star.GestureRecognizers.Add(tapGesture);
+            StarContainer.Children.Add(star);
+        }
+    }
+
+    private void UpdateStarImages(int rating)
+    {
+        for (int i = 0; i < StarContainer.Children.Count; i++)
+        {
+            if (StarContainer.Children[i] is Image starImage)
+            {
+                starImage.Source = i < rating ? "star_filled.png" : "star_empty.png";
+            }
+        }
+    }
+
+    private async Task SubmitRatingAsync()
+    {
+        int customerId = _currentUserId;
+
+        bool result = await _driverService.RateDriverAsync(_driver.Id, customerId, _selectedRating);
+        if (result)
+        {
+            await DisplayAlert("Hvala!", "Vaša ocjena je zabilježena.", "OK");
+            await Navigation.PushAsync(new DriverSelectionPage());
+        }
+        else
+        {
+            await DisplayAlert("Greška", "Nije moguće snimiti ocjenu.", "OK");
         }
     }
 }

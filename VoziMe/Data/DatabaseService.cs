@@ -188,5 +188,54 @@ namespace VoziMe
                 await driverCommand.ExecuteNonQueryAsync();
             }
         }
+        public async Task<bool> RateDriverAsync(int driverId, int customerId, int rating)
+        {
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            INSERT INTO driverratings (driverid, customerid, rating)
+            VALUES (@DriverId, @CustomerId, @Rating);";
+
+                command.Parameters.AddWithValue("@DriverId", driverId);
+                command.Parameters.AddWithValue("@CustomerId", customerId);
+                command.Parameters.AddWithValue("@Rating", rating);
+
+                await command.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error rating driver: {ex.Message}");
+                return false;
+            }
+        }
+        public async Task<double?> GetDriverAverageRatingAsync(int driverId)
+        {
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            SELECT AVG(rating) FROM driverratings
+            WHERE driverid = @DriverId;";
+
+                command.Parameters.AddWithValue("@DriverId", driverId);
+
+                var result = await command.ExecuteScalarAsync();
+                return result == DBNull.Value ? null : Convert.ToDouble(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching driver rating: {ex.Message}");
+                return null;
+            }
+        }
+
     }
 }
