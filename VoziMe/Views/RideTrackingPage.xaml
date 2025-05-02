@@ -6,12 +6,12 @@
              BackgroundColor="White">
 
     <Grid RowDefinitions="*,Auto">
-        <!-- MAPA -->
+        <!-- Mapa -->
         <maps:Map x:Name="TrackingMap"
                   MapType="Street"
                   IsShowingUser="True" />
 
-        <!-- DETALJI VOZAČA -->
+        <!-- Detalji vozača -->
         <Frame Grid.Row="1"
                BackgroundColor="White"
                Padding="15"
@@ -23,14 +23,25 @@
                 <Label x:Name="CarInfoLabel" FontSize="14" TextColor="Gray"/>
                 <Label x:Name="EtaLabel" FontSize="14" TextColor="Green"/>
                 <Button Text="Završi vožnju"
-        Clicked="FinishRideButton_Clicked"
-        BackgroundColor="Green"
-        TextColor="White"
-        Margin="20"
-        VerticalOptions="End"/>
+                        Clicked="FinishRideButton_Clicked"
+                        BackgroundColor="Green"
+                        TextColor="White"
+                        Margin="20"
+                        VerticalOptions="End"/>
 
+                <!-- Ocjenjivanje vozača -->
+                <StackLayout x:Name="RatingView"
+                             IsVisible="False"
+                             Margin="0,10,0,0"
+                             HorizontalOptions="Center"
+                             Orientation="Horizontal"
+                             Spacing="10">
+                    <Label Text="Ocijeni vožnju:" FontAttributes="Bold" FontSize="16" TextColor="Black" />
+                    <StackLayout Orientation="Horizontal" x:Name="StarContainer">
+                        <!-- Zvjezdice se dodaju iz code-behind -->
+                    </StackLayout>
+                </StackLayout>
             </StackLayout>
-            
         </Frame>
     </Grid>
 </ContentPage>

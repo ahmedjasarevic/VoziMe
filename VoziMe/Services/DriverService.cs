@@ -210,5 +210,52 @@ namespace VoziMe.Services
                 return false;
             }
         }
+        public async Task<bool> RateDriverAsync(int driverId, int customerId, int rating)
+        {
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // 1. Ubaci novu ocjenu
+                var insertCommand = connection.CreateCommand();
+                insertCommand.CommandText = @"
+            INSERT INTO driverratings (driverid, customerid, rating, ratedat)
+            VALUES (@DriverId, @CustomerId, @Rating, CURRENT_TIMESTAMP);
+        ";
+                insertCommand.Parameters.AddWithValue("@DriverId", driverId);
+                insertCommand.Parameters.AddWithValue("@CustomerId", customerId);
+                insertCommand.Parameters.AddWithValue("@Rating", rating);
+                await insertCommand.ExecuteNonQueryAsync();
+
+                // 2. Izračunaj prosjek ocjena
+                var avgCommand = connection.CreateCommand();
+                avgCommand.CommandText = @"
+            SELECT AVG(rating) FROM driverratings WHERE driverid = @DriverId;
+        ";
+                avgCommand.Parameters.AddWithValue("@DriverId", driverId);
+                var avgResult = await avgCommand.ExecuteScalarAsync();
+
+                // 3. Zaokruži prosjek i ažuriraj glavnu tabelu Drivers
+                var averageRating = Convert.ToInt32(Math.Round(Convert.ToDouble(avgResult)));
+
+                var updateCommand = connection.CreateCommand();
+                updateCommand.CommandText = @"
+            UPDATE Drivers SET Rating = @AvgRating WHERE Id = @DriverId;
+        ";
+                updateCommand.Parameters.AddWithValue("@AvgRating", averageRating);
+                updateCommand.Parameters.AddWithValue("@DriverId", driverId);
+                await updateCommand.ExecuteNonQueryAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Greška pri ocjenjivanju vozača: {ex.Message}");
+                return false;
+            }
+        }
+
+
     }
 }

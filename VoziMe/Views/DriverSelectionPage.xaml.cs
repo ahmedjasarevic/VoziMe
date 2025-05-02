@@ -3,6 +3,9 @@ using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace VoziMe.Views;
 
@@ -13,6 +16,20 @@ public partial class DriverSelectionPage : ContentPage
     private readonly LocationService _locationService;
     private double _currentLatitude;
     private double _currentLongitude;
+
+    private readonly string _googleApiKey = "AIzaSyCBd-dkJ39xZnNFXLUIfRpwdVkFtfURhEY"; // <-- OVDE STAVI SVOJ KEY
+
+    public DriverSelectionPage()
+    {
+        InitializeComponent();
+
+        _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
+        _userService = Application.Current.Handler.MauiContext.Services.GetService<UserService>();
+        _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
+
+        InitializeMapAsync();
+    }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -26,7 +43,7 @@ public partial class DriverSelectionPage : ContentPage
 
             if (placemark != null)
             {
-                string address = $"{placemark.Thoroughfare} {placemark.SubThoroughfare}, {placemark.Locality}";
+                string address = $"{placemark.Thoroughfare} {placemark.SubThoroughfare}, { placemark.Locality} ";
                 SourceEntry.Text = address;
             }
             else
@@ -39,80 +56,52 @@ public partial class DriverSelectionPage : ContentPage
             SourceEntry.Text = "Trenutna lokacija";
         }
     }
-    public DriverSelectionPage()
-    {
-
-        InitializeComponent();
-
-        _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
-        _userService = Application.Current.Handler.MauiContext.Services.GetService<UserService>();
-        _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
-
-        InitializeMapAsync();
-    }
 
     private async void InitializeMapAsync()
     {
         try
         {
-            var location = await _locationService.GetCurrentLocationAsync(
+            var location = await
 
-);
-            Console.WriteLine($"Lokacija dohvaćena: {location.Latitude}, {location.Longitude}");
-
+_locationService.GetCurrentLocationAsync();
             _currentLatitude = location.Latitude;
             _currentLongitude = location.Longitude;
 
-            LocationMap.MoveToRegion(
-                MapSpan.FromCenterAndRadius(
-                    new Location(_currentLatitude, _currentLongitude),
-                    Distance.FromKilometers(1)));
+            LocationMap.MoveToRegion(MapSpan.FromCenterAndRadius(
+                new Location(_currentLatitude, _currentLongitude),
+                Distance.FromKilometers(1)));
 
             await LoadDriversAsync();
         }
         catch (Exception ex)
         {
             await DisplayAlert("Greška", $"Nije moguće učitati mapu: {ex.Message}", "OK");
-
         }
     }
+
 
     private async Task LoadDriversAsync()
     {
         try
         {
             var drivers = await _driverService.GetNearbyDriversAsync(_currentLatitude, _currentLongitude);
-
-            Console.WriteLine($"Broj vozača: {drivers.Count()}");
-
-            if (drivers.Count() == 0)
-            {
-                await DisplayAlert("Nema vozača", "Trenutno nema vozača u vašoj blizini.", "OK");
-            }
-
             DriversCollection.ItemsSource = drivers;
 
             foreach (var driver in drivers)
             {
                 if (driver.Latitude != 0 && driver.Longitude != 0)
                 {
-                    var driverLocation = new Location(driver.Latitude, driver.Longitude);
-
-                    var existingPin = LocationMap.Pins.FirstOrDefault(pin => pin.Label == driver.Name);
-                    if (existingPin == null)
+                    var pin = new Pin
                     {
-                        var pin = new Pin
-                        {
-                            Label = driver.Name,
-                            Address = "Nema adrese",
-                            Type = PinType.Place,
+                        Label = driver.Name,
+                        Address = "Nema adrese",
+                        Type = PinType.Place,
 
-                            Location = driverLocation
-                        };
+                        Location = new Location(driver.Latitude, driver.Longitude)
+                    };
 
+                    if (!LocationMap.Pins.Any(p => p.Label == pin.Label))
                         LocationMap.Pins.Add(pin);
-                        Console.WriteLine($"Dodavanje pin-a za: {driver.Name}");
-                    }
                 }
             }
         }
@@ -122,111 +111,86 @@ public partial class DriverSelectionPage : ContentPage
         }
     }
 
-    private async void SourceEntry_Completed(object sender,
+    private async void SourceEntry_Completed(object sender, EventArgs e)
 
-EventArgs e)
     {
-        var address = SourceEntry.Text;
+        await GeocodeAndCenter(SourceEntry.Text);
+    }
+
+    private async Task GeocodeAndCenter(string address)
+    {
         if (!string.IsNullOrWhiteSpace(address))
         {
-            try
+            var locations = await Geocoding.GetLocationsAsync(address);
+            var location = locations?.FirstOrDefault();
+            if (location != null)
             {
-                var locations = await Geocoding.GetLocationsAsync(address);
-                var location = locations?.FirstOrDefault();
-                if (location != null)
-                {
-                    _currentLatitude = location.Latitude;
-                    _currentLongitude = location.Longitude;
-
-                    LocationMap.MoveToRegion(
+                _currentLatitude = location.Latitude;
+                _currentLongitude = location.Longitude;
 
 
-MapSpan.FromCenterAndRadius(
-                            new Location(_currentLatitude, _currentLongitude),
-                            Distance.FromKilometers(1)));
+                LocationMap.MoveToRegion(MapSpan.FromCenterAndRadius(
+                    new Location(_currentLatitude, _currentLongitude),
+                    Distance.FromKilometers(1)));
 
-                    await LoadDriversAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Lokacija", "Lokacija nije pronađena.", "OK");
-                }
+                await LoadDriversAsync();
             }
-            catch (Exception ex)
+            else
             {
-                await DisplayAlert("Greška", $"Greška pri pretrazi lokacije: {ex.Message}", "OK");
+                await DisplayAlert("Lokacija", "Lokacija nije pronađena.", "OK");
             }
-
         }
     }
 
     private async Task HandleDriverSelection(Driver selectedDriver)
+
     {
         var destination = DestinationEntry.Text;
-
         if (string.IsNullOrWhiteSpace(destination))
         {
-            await DisplayAlert("Greška", "Molimo unesite destinaciju prije nego što naručite vožnju.", "OK");
+            await DisplayAlert("Greška", "Unesite destinaciju.", "OK");
             return;
         }
 
-        var destinationLocations = await Geocoding.GetLocationsAsync(destination);
-
-        var destinationLocation = destinationLocations?.FirstOrDefault();
-
-        if (destinationLocation == null)
+        var locations = await Geocoding.GetLocationsAsync(destination);
+        var loc = locations?.FirstOrDefault();
+        if (loc == null)
         {
-            await DisplayAlert("Greška", "Nismo mogli pronaći unesenu destinaciju.", "OK");
+            await DisplayAlert("Greška", "Destinacija nije validna.", "OK");
             return;
         }
 
-        bool confirm = await DisplayAlert(
-            "Potvrda",
-            $"Naručiti vožnju sa vozačem {selectedDriver.Name} prema: {destination}?",
-            "Da", "Ne");
+        bool confirm = await DisplayAlert("Potvrda", $"Naručiti vožnju sa vozačem {selectedDriver.Name} prema: {destination}?", "Da", "Ne");
+        if (!confirm) return;
 
-        if (confirm)
+        var success = await _driverService.BookRideAsync(
+            _userService.CurrentUser.Id,
+            selectedDriver.Id,
+            _currentLatitude,
+            _currentLongitude,
+            SourceEntry.Text ?? "Trenutna lokacija",
+            loc.Latitude,
+            loc.Longitude,
+            destination);
+
+        if (success)
         {
-            try
-            {
-
-                bool success = await _driverService.BookRideAsync(
-                    _userService.CurrentUser.Id,
-                    selectedDriver.Id,
-                    _currentLatitude,
-                    _currentLongitude,
-                    SourceEntry.Text ?? "Trenutna lokacija",
-                    destinationLocation.Latitude,
-                    destinationLocation.Longitude,
-                    destination);
-
-                if (success)
-                {
-                    await DisplayAlert("Uspjeh", "Vožnja je naručena. Vozač će uskoro stići.", "OK");
-                    await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude,
-
-_currentLongitude)));
-                }
-                else
-                {
-                    await DisplayAlert("Greška", "Nije moguće naručiti vožnju. Pokušajte ponovo.", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Greška", $"Greška pri naručivanju: {ex.Message}", "OK");
-            }
+            await DisplayAlert("Uspjeh", "Vožnja naručena.", "OK");
+            await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude), _userService.CurrentUser.Id));
+        }
+        else
+        {
+            await DisplayAlert("Greška", "Naručivanje nije uspjelo.", "OK");
         }
     }
 
     private async void DriverCard_Tapped(object sender, EventArgs e)
-
     {
-        if (sender is Frame frame && frame.BindingContext is Driver selectedDriver)
-        {
-            await HandleDriverSelection(selectedDriver);
-        }
+        if (sender is Frame frame && frame.BindingContext is Driver driver)
+            await HandleDriverSelection(driver);
+
     }
+
     private async void RefreshDrivers_Clicked(object sender, EventArgs e)
     {
         await LoadDriversAsync();
@@ -234,23 +198,94 @@ _currentLongitude)));
 
     private void ShowDriversButton_Clicked(object sender, EventArgs e)
     {
+        BottomSheet.IsVisible = true;
+        MapArea.HeightRequest = 450;
+        MapArea.VerticalOptions = LayoutOptions.Start;
+        ShowDriversButton.IsVisible = false;
+    }
+
+    // --------------------------- AUTOCOMPLETE 
+
+
+    private async void SourceEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        await FetchPredictionsAsync(e.NewTextValue, isSource: true);
+    }
+
+    private async void DestinationEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        await FetchPredictionsAsync(e.NewTextValue, isSource: false);
+    }
+
+    private async Task
+
+FetchPredictionsAsync(string input, bool isSource)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            if (isSource) SourceSuggestions.IsVisible = false;
+            else DestinationSuggestions.IsVisible = false;
+            return;
+        }
+
         try
         {
-            // Prikaži BottomSheet
-            BottomSheet.IsVisible = true;
+            var url = $"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={Uri.EscapeDataString(input)}&types=geocode&key={_googleApiKey}";
+            var client = new HttpClient();
+            var response = await
 
-            // Smanji Mapu da zauzima pola ekrana
+client.GetStringAsync(url);
 
-            MapArea.HeightRequest = 450;
-            MapArea.VerticalOptions = LayoutOptions.Start;
-
-            // Sakrij dugme da ne smeta
-            ShowDriversButton.IsVisible = false;
+            var result = JsonSerializer.Deserialize<GooglePlacesResponse>(response);
+            if (isSource)
+            {
+                SourceSuggestions.ItemsSource = result?.Predictions;
+                SourceSuggestions.IsVisible = result?.Predictions?.Any() == true;
+            }
+            else
+            {
+                DestinationSuggestions.ItemsSource = result?.Predictions;
+                DestinationSuggestions.IsVisible = result?.Predictions?.Any() == true;
+            }
         }
+
         catch (Exception ex)
         {
-            Console.WriteLine($"Greška kod prikaza vozača: {ex.Message}");
+            Console.WriteLine($"Autocomplete error: {ex.Message}");
         }
     }
-    
+
+    private void SourceSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is Prediction selected)
+        {
+            SourceEntry.Text = selected.Description;
+            SourceSuggestions.IsVisible = false;
+        }
+    }
+
+    private void
+
+DestinationSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is Prediction selected)
+        {
+            DestinationEntry.Text = selected.Description;
+            DestinationSuggestions.IsVisible = false;
+        }
+    }
+
+    // -------------------------- JSON MODEL -------------------------------
+    public class GooglePlacesResponse
+    {
+        [JsonPropertyName("predictions")]
+        public List<Prediction> Predictions { get; set; }
+
+    }
+
+    public class Prediction
+    {
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+    }
 }

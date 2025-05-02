@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VoziMe")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+bef09ab98a5f2cf63f995d61ebf611a2bd51e289")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+a4b1a704c43cec9469babe23acea1779ba8c81f1")]
 [assembly: System.Reflection.AssemblyProductAttribute("VoziMe")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VoziMe")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
