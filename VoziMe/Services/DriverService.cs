@@ -255,6 +255,62 @@ namespace VoziMe.Services
                 return false;
             }
         }
+        public async Task<bool> UpdateDriverAvailabilityAsync(int driverId, double latitude, double longitude, bool isAvailable)
+        {
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            UPDATE Drivers
+            SET Latitude = @Latitude,
+                Longitude = @Longitude,
+                IsAvailable = @IsAvailable
+            WHERE Id = @DriverId;
+        ";
+
+                command.Parameters.AddWithValue("@Latitude", latitude);
+                command.Parameters.AddWithValue("@Longitude", longitude);
+                command.Parameters.AddWithValue("@IsAvailable", isAvailable ? 1 : 0);
+                command.Parameters.AddWithValue("@DriverId", driverId);
+
+                await command.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"UpdateDriverAvailability error: {ex.Message}");
+                return false;
+            }
+        }
+        public async Task<Driver> GetDriverByUserIdAsync(int userId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT * FROM Drivers WHERE UserId = @UserId";
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new Driver
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                    Car = reader.GetString(reader.GetOrdinal("Car")),
+                    Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
+                    Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
+                    Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                    IsAvailable = reader.GetInt32(reader.GetOrdinal("IsAvailable")) == 1
+                };
+            }
+
+            return null;
+        }
 
 
     }

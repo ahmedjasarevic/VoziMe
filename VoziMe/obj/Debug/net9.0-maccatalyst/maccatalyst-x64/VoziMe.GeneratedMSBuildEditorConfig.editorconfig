@@ -48,6 +48,12 @@ build_metadata.AdditionalFiles.ManifestResourceName = VoziMe.Resources.Styles.St
 build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Styles.xaml
 build_metadata.AdditionalFiles.RelativePath = Resources\Styles\Styles.xaml
 
+[C:/Users/DT User/Desktop/V2/VoziMe/Views/DriverHomePage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = VoziMe.Views.DriverHomePage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\DriverHomePage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\DriverHomePage.xaml
+
 [C:/Users/DT User/Desktop/V2/VoziMe/Views/DriverSelectionPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = VoziMe.Views.DriverSelectionPage.xaml
