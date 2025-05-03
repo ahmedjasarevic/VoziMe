@@ -1,3 +1,4 @@
+using Npgsql;
 using VoziMe.Models;
 using VoziMe.Services;
 
@@ -6,6 +7,7 @@ namespace VoziMe.Views;
 
 public partial class LoginPage : ContentPage
 {
+    private readonly DriverService _driverService;
     private readonly UserType _userType;
     private readonly UserService _userService;
 
@@ -14,6 +16,7 @@ public partial class LoginPage : ContentPage
         InitializeComponent();
         _userType = userType;
         _userService = Application.Current.Handler.MauiContext.Services.GetService<UserService>();
+        _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
     }
 
     private async void OnLoginButtonClicked(object sender, EventArgs e)
@@ -36,8 +39,11 @@ public partial class LoginPage : ContentPage
                 }
                 else
                 {
+                    var user = await _userService.GetUserByEmailAsync(UsernameEntry.Text);
+                    var driver = await _driverService.GetDriverByUserIdAsync(user.Id);
+                    int driverId = driver.Id;
                     // For driver, you would navigate to a driver dashboard
-                    await DisplayAlert("Uspjeh", "Vozaè uspješno prijavljen. Vozaèki dashboard nije implementiran u ovoj verziji.", "OK");
+                    await Navigation.PushAsync(new DriverHomePage(driverId));
                 }
             }
             else
