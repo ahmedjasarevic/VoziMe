@@ -84,30 +84,48 @@ _locationService.GetCurrentLocationAsync();
     {
         try
         {
-            var drivers = await _driverService.GetNearbyDriversAsync(_currentLatitude, _currentLongitude);
-            DriversCollection.ItemsSource = drivers;
+            LocationMap.Pins.Clear();
+
+            var drivers = await _driverService.GetAllAvailableDriversAsync(); // koristi sve dostupne
 
             foreach (var driver in drivers)
             {
-                if (driver.Latitude != 0 && driver.Longitude != 0)
+                if (driver.Latitude == 0 || driver.Longitude == 0)
+                    continue;
+
+                var pin = new Pin
                 {
-                    var pin = new Pin
-                    {
-                        Label = driver.Name,
-                        Address = "Nema adrese",
-                        Type = PinType.Place,
+                    Label = driver.Name,
+                    Address = await GetAddressFromCoordinatesAsync(driver.Latitude, driver.Longitude),
+                    Location = new Location(driver.Latitude, driver.Longitude),
+                    Type = PinType.Place
+                };
 
-                        Location = new Location(driver.Latitude, driver.Longitude)
-                    };
-
-                    if (!LocationMap.Pins.Any(p => p.Label == pin.Label))
-                        LocationMap.Pins.Add(pin);
-                }
+                LocationMap.Pins.Add(pin);
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Greška", $"Greška pri učitavanju vozača: {ex.Message}", "OK");
+            await DisplayAlert("Greška", $"Neuspješno učitavanje vozača: {ex.Message}", "OK");
+        }
+    }
+    private async Task<string> GetAddressFromCoordinatesAsync(double latitude, double longitude)
+    {
+        try
+        {
+            var placemarks = await Geocoding.GetPlacemarksAsync(latitude, longitude);
+            var placemark = placemarks?.FirstOrDefault();
+
+            if (placemark != null)
+            {
+                return $"{placemark.Thoroughfare ?? ""} {placemark.SubThoroughfare ?? ""}, {placemark.Locality ?? placemark.CountryName}";
+            }
+
+            return "Nepoznata lokacija";
+        }
+        catch
+        {
+            return "Adresa nije dostupna";
         }
     }
 

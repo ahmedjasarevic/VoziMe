@@ -257,6 +257,10 @@ namespace VoziMe.Services
         }
         public async Task<bool> UpdateDriverAvailabilityAsync(int driverId, double latitude, double longitude, bool isAvailable)
         {
+            if (latitude == 0 || longitude == 0)
+            {
+                return false;
+            }
             try
             {
                 using var connection = new NpgsqlConnection(_connectionString);
@@ -311,7 +315,47 @@ namespace VoziMe.Services
 
             return null;
         }
+        public async Task<List<Driver>> GetAllAvailableDriversAsync()
+        {
+            var drivers = new List<Driver>();
 
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.IsAvailable
+            FROM Drivers d
+            JOIN Users u ON d.UserId = u.Id
+            WHERE d.IsAvailable = 1
+        ";
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    drivers.Add(new Driver
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        ProfileImage = reader.IsDBNull(reader.GetOrdinal("ProfileImage")) ? null : reader.GetString(reader.GetOrdinal("ProfileImage")),
+                        Car = reader.GetString(reader.GetOrdinal("Car")),
+                        Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
+                        Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
+                        Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                        IsAvailable = reader.GetBoolean(reader.GetOrdinal("IsAvailable"))
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Greška kod učitavanja vozača: " + ex.Message);
+            }
+
+            return drivers;
+        }
 
     }
 }

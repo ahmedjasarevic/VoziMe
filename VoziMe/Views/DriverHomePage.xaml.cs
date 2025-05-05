@@ -43,14 +43,15 @@ public partial class DriverHomePage : ContentPage
 
     private async void ToggleAvailability_Clicked(object sender, EventArgs e)
     {
-        _isAvailable = !_isAvailable;
-
         var location = await _locationService.GetCurrentLocationAsync();
         if (location == default)
         {
             await DisplayAlert("Lokacija", "Nije moguæe dobiti trenutnu lokaciju.", "OK");
             return;
         }
+
+        // Obrni status tek sad
+        _isAvailable = !_isAvailable;
 
         bool success = await _driverService.UpdateDriverAvailabilityAsync(
             _driverId,
