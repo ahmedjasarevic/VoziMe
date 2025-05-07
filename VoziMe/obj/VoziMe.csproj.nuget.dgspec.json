@@ -1,24 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\DT User\\Downloads\\voyi\\VoziMe\\VoziMe.csproj": {}
+    "C:\\Users\\K\\Desktop\\VoziMe\\VoziMe\\VoziMe.csproj": {}
   },
   "projects": {
-    "C:\\Users\\DT User\\Downloads\\voyi\\VoziMe\\VoziMe.csproj": {
+    "C:\\Users\\K\\Desktop\\VoziMe\\VoziMe\\VoziMe.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\DT User\\Downloads\\voyi\\VoziMe\\VoziMe.csproj",
+        "projectUniqueName": "C:\\Users\\K\\Desktop\\VoziMe\\VoziMe\\VoziMe.csproj",
         "projectName": "VoziMe",
-        "projectPath": "C:\\Users\\DT User\\Downloads\\voyi\\VoziMe\\VoziMe.csproj",
-        "packagesPath": "C:\\Users\\DT User\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\DT User\\Downloads\\voyi\\VoziMe\\obj\\",
+        "projectPath": "C:\\Users\\K\\Desktop\\VoziMe\\VoziMe\\VoziMe.csproj",
+        "packagesPath": "C:\\Users\\K\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\K\\Desktop\\VoziMe\\VoziMe\\obj\\",
         "projectStyle": "PackageReference",
         "crossTargeting": true,
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\DT User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\K\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -38,11 +38,11 @@
             "targetAlias": "net9.0-android",
             "projectReferences": {}
           },
-          "net9.0-ios18.2": {
+          "net9.0-ios18.4": {
             "targetAlias": "net9.0-ios",
             "projectReferences": {}
           },
-          "net9.0-maccatalyst18.2": {
+          "net9.0-maccatalyst18.4": {
             "targetAlias": "net9.0-maccatalyst",
             "projectReferences": {}
           },
@@ -59,9 +59,9 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "direct"
+          "auditMode": "all"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net9.0-android35.0": {
@@ -102,7 +102,7 @@
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[9.0.4, )",
+              "version": "[9.0.0, )",
               "autoReferenced": true
             },
             "Npgsql": {
@@ -129,6 +129,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.4, 9.0.4]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.Android": {
               "privateAssets": "all"
@@ -137,9 +143,9 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100/PortableRuntimeIdentifierGraph.json"
         },
-        "net9.0-ios18.2": {
+        "net9.0-ios18.4": {
           "targetAlias": "net9.0-ios",
           "dependencies": {
             "BCrypt.Net-Next": {
@@ -177,7 +183,7 @@
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[9.0.4, )",
+              "version": "[9.0.0, )",
               "autoReferenced": true
             },
             "Npgsql": {
@@ -204,6 +210,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.4, 9.0.4]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.iOS": {
               "privateAssets": "all"
@@ -212,9 +224,9 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100/PortableRuntimeIdentifierGraph.json"
         },
-        "net9.0-maccatalyst18.2": {
+        "net9.0-maccatalyst18.4": {
           "targetAlias": "net9.0-maccatalyst",
           "dependencies": {
             "BCrypt.Net-Next": {
@@ -252,7 +264,7 @@
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[9.0.4, )",
+              "version": "[9.0.0, )",
               "autoReferenced": true
             },
             "Npgsql": {
@@ -280,6 +292,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.4, 9.0.4]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.MacCatalyst": {
               "privateAssets": "all"
@@ -288,7 +306,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100/PortableRuntimeIdentifierGraph.json"
         },
         "net9.0-windows10.0.19041": {
           "targetAlias": "net9.0-windows10.0.19041.0",
@@ -352,7 +370,7 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.Windows.SDK.NET.Ref",
-              "version": "[10.0.19041.57, 10.0.19041.57]"
+              "version": "[10.0.19041.54, 10.0.19041.54]"
             }
           ],
           "frameworkReferences": {
@@ -363,7 +381,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100\\RuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

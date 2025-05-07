@@ -114,7 +114,7 @@ namespace VoziMe.Services
                     driverCommand.Parameters.AddWithValue("@Latitude", 44.2037); // Default location
                     driverCommand.Parameters.AddWithValue("@Longitude", 17.9071);
                     driverCommand.Parameters.AddWithValue("@Rating", 0);
-                    driverCommand.Parameters.AddWithValue("@IsAvailable", 1);
+                    driverCommand.Parameters.AddWithValue("@IsAvailable", true);
 
                     await driverCommand.ExecuteNonQueryAsync();
                 }

@@ -87,6 +87,10 @@ _locationService.GetCurrentLocationAsync();
             LocationMap.Pins.Clear();
 
             var drivers = await _driverService.GetAllAvailableDriversAsync(); // koristi sve dostupne
+            Console.WriteLine($"Broj dostupnih vozača: {drivers.Count}");
+            DriversCollection.ItemsSource = drivers;
+
+
 
             foreach (var driver in drivers)
             {

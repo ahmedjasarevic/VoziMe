@@ -8,7 +8,7 @@ namespace VoziMe.Services
 {
     public class DriverService
     {
-       
+
 
         private readonly string _connectionString;
 
@@ -28,10 +28,10 @@ namespace VoziMe.Services
 
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-                    SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.IsAvailable
+                    SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.isavailable
                     FROM Drivers d
                     JOIN Users u ON d.UserId = u.Id
-                    WHERE d.IsAvailable = 1;
+                    WHERE d.isavailable = true;
                 ";
 
                 using var reader = await command.ExecuteReaderAsync();
@@ -61,7 +61,7 @@ namespace VoziMe.Services
                             Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
                             Latitude = driverLatitude,
                             Longitude = driverLongitude,
-                            IsAvailable = reader.GetInt32(reader.GetOrdinal("IsAvailable")) == 1
+                            IsAvailable = reader.GetBoolean(reader.GetOrdinal("isavailable"))
                         });
                     }
                 }
@@ -93,7 +93,7 @@ namespace VoziMe.Services
                     VALUES (@CustomerId, @DriverId, @SourceLat, @SourceLong, @SourceAddr,
                             @DestLat, @DestLong, @DestAddr, @Price, @Status);
 
-                    UPDATE Drivers SET IsAvailable = 0 WHERE Id = @DriverId;
+                    UPDATE Drivers SET isavailable = false WHERE Id = @DriverId;
                 ";
 
                 command.Parameters.AddWithValue("@CustomerId", customerId);
@@ -128,7 +128,7 @@ namespace VoziMe.Services
                 command.CommandText = @"
                 UPDATE Rides SET Status = @Status, CompletedAt = CURRENT_TIMESTAMP WHERE Id = @RideId;
 
-                UPDATE Drivers SET IsAvailable = 1 WHERE Id = @DriverId;
+                UPDATE Drivers SET isavailable = true WHERE Id = @DriverId;
             ";
 
                 command.Parameters.AddWithValue("@Status", (int)RideStatus.Completed); // Završena vožnja
@@ -185,7 +185,7 @@ namespace VoziMe.Services
                 var command = connection.CreateCommand();
                 command.CommandText = @"
                 UPDATE Drivers
-                SET IsAvailable = 1
+                SET isavailable = true
                 WHERE Id = @DriverId;";
                 command.Parameters.AddWithValue("@DriverId", driverId);
 
@@ -271,13 +271,13 @@ namespace VoziMe.Services
             UPDATE Drivers
             SET Latitude = @Latitude,
                 Longitude = @Longitude,
-                IsAvailable = @IsAvailable
+                isavailable = @isavailable
             WHERE Id = @DriverId;
         ";
 
                 command.Parameters.AddWithValue("@Latitude", latitude);
                 command.Parameters.AddWithValue("@Longitude", longitude);
-                command.Parameters.AddWithValue("@IsAvailable", isAvailable ? 1 : 0);
+                command.Parameters.AddWithValue("@isavailable", isAvailable ? 1 : 0);
                 command.Parameters.AddWithValue("@DriverId", driverId);
 
                 await command.ExecuteNonQueryAsync();
@@ -309,7 +309,7 @@ namespace VoziMe.Services
                     Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
                     Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
                     Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
-                    IsAvailable = reader.GetInt32(reader.GetOrdinal("IsAvailable")) == 1
+                    IsAvailable = reader.GetBoolean(reader.GetOrdinal("isavailable"))
                 };
             }
 
@@ -326,10 +326,13 @@ namespace VoziMe.Services
 
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-            SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.IsAvailable
-            FROM Drivers d
-            JOIN Users u ON d.UserId = u.Id
-            WHERE d.IsAvailable = 1
+SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.isavailable
+FROM Drivers d
+JOIN Users u ON d.UserId = u.Id
+WHERE d.isavailable = true;
+
+
+
         ";
 
                 using var reader = await command.ExecuteReaderAsync();
@@ -345,7 +348,7 @@ namespace VoziMe.Services
                         Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
                         Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
                         Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
-                        IsAvailable = reader.GetBoolean(reader.GetOrdinal("IsAvailable"))
+                        IsAvailable = reader.GetBoolean(reader.GetOrdinal("isavailable"))
                     });
                 }
             }
@@ -359,3 +362,4 @@ namespace VoziMe.Services
 
     }
 }
+
