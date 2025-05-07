@@ -1,5 +1,22 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+# Visual Studio
 ################################################################################
 
-/.vs
+# User-specific files
+.vscode/
+.vs/
+.vscode/settings.json
+
+# Build output
+**/bin/
+**/obj/
+
+# Other auto-generated files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.ncrunchproject
+*.localhistory/
+*.DS_Store
+*.directory
