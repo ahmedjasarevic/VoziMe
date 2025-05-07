@@ -1,4 +1,4 @@
-using Microsoft.Maui.Controls.Maps;
+﻿using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Devices.Sensors;
 using Microsoft.Maui.Maps;
 using VoziMe.Models;
@@ -23,6 +23,43 @@ public partial class DriverHomePage : ContentPage
         InitializeMap();
     }
 
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // Inicijalizuj status dostupnosti vozača
+        await LoadDriverAvailability();
+    }
+
+    private async Task LoadDriverAvailability()
+    {
+        try
+        {
+            // Dohvati trenutnu dostupnost vozača iz baze
+            var driver = await _driverService.GetDriverByUserIdAsync(_driverId);
+
+            if (driver != null)
+            {
+                _isAvailable = driver.IsAvailable;
+
+                // Ažuriraj UI prema dostupnosti vozača
+                AvailabilityToggleButton.Text = _isAvailable ? "Prekini potragu" : "Traži vožnju";
+                AvailabilityToggleButton.BackgroundColor = _isAvailable ? Colors.Red : Colors.Green;
+            }
+            else
+            {
+                // Ako vozač nije pronađen, setuj dostupnost na false
+                _isAvailable = false;
+                AvailabilityToggleButton.Text = "Traži vožnju";
+                AvailabilityToggleButton.BackgroundColor = Colors.Green;
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Greška", $"Nije moguće učitati status vozača: {ex.Message}", "OK");
+        }
+    }
+
     private async void InitializeMap()
     {
         try
@@ -37,7 +74,7 @@ public partial class DriverHomePage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Gre�ka", $"Nije mogu�e prikazati mapu: {ex.Message}", "OK");
+            await DisplayAlert("Greška", $"Nije moguće prikazati mapu: {ex.Message}", "OK");
         }
     }
 
@@ -46,7 +83,7 @@ public partial class DriverHomePage : ContentPage
         var location = await _locationService.GetCurrentLocationAsync();
         if (location == default)
         {
-            await DisplayAlert("Lokacija", "Nije mogu�e dobiti trenutnu lokaciju.", "OK");
+            await DisplayAlert("Lokacija", "Nije moguće dobiti trenutnu lokaciju.", "OK");
             return;
         }
 
@@ -62,11 +99,11 @@ public partial class DriverHomePage : ContentPage
 
         if (!success)
         {
-            await DisplayAlert("Gre�ka", "Gre�ka pri a�uriranju statusa dostupnosti.", "OK");
+            await DisplayAlert("Greška", "Greška pri ažuriranju statusa dostupnosti.", "OK");
             return;
         }
 
-        AvailabilityToggleButton.Text = _isAvailable ? "Prekini potragu" : "Tra�i vo�nju";
+        AvailabilityToggleButton.Text = _isAvailable ? "Prekini potragu" : "Traži vožnju";
         AvailabilityToggleButton.BackgroundColor = _isAvailable ? Colors.Red : Colors.Green;
     }
 }
