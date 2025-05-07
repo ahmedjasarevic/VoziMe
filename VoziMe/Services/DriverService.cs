@@ -277,7 +277,7 @@ namespace VoziMe.Services
 
                 command.Parameters.AddWithValue("@Latitude", latitude);
                 command.Parameters.AddWithValue("@Longitude", longitude);
-                command.Parameters.AddWithValue("@isavailable", isAvailable ? 1 : 0);
+                command.Parameters.AddWithValue("@isavailable", isAvailable);  // Ovde šaljemo bool
                 command.Parameters.AddWithValue("@DriverId", driverId);
 
                 await command.ExecuteNonQueryAsync();
@@ -315,6 +315,8 @@ namespace VoziMe.Services
 
             return null;
         }
+
+
         public async Task<List<Driver>> GetAllAvailableDriversAsync()
         {
             var drivers = new List<Driver>();
