@@ -8,7 +8,7 @@ namespace VoziMe.Services
 {
     public class DriverService
     {
-       
+
 
         private readonly string _connectionString;
 
@@ -28,10 +28,10 @@ namespace VoziMe.Services
 
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-                    SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.IsAvailable
+                    SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.isavailable
                     FROM Drivers d
                     JOIN Users u ON d.UserId = u.Id
-                    WHERE d.IsAvailable = 1;
+                    WHERE d.isavailable = true;
                 ";
 
                 using var reader = await command.ExecuteReaderAsync();
@@ -61,7 +61,7 @@ namespace VoziMe.Services
                             Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
                             Latitude = driverLatitude,
                             Longitude = driverLongitude,
-                            IsAvailable = reader.GetInt32(reader.GetOrdinal("IsAvailable")) == 1
+                            IsAvailable = reader.GetBoolean(reader.GetOrdinal("isavailable"))
                         });
                     }
                 }
@@ -93,7 +93,7 @@ namespace VoziMe.Services
                     VALUES (@CustomerId, @DriverId, @SourceLat, @SourceLong, @SourceAddr,
                             @DestLat, @DestLong, @DestAddr, @Price, @Status);
 
-                    UPDATE Drivers SET IsAvailable = 0 WHERE Id = @DriverId;
+                    UPDATE Drivers SET isavailable = false WHERE Id = @DriverId;
                 ";
 
                 command.Parameters.AddWithValue("@CustomerId", customerId);
@@ -128,7 +128,7 @@ namespace VoziMe.Services
                 command.CommandText = @"
                 UPDATE Rides SET Status = @Status, CompletedAt = CURRENT_TIMESTAMP WHERE Id = @RideId;
 
-                UPDATE Drivers SET IsAvailable = 1 WHERE Id = @DriverId;
+                UPDATE Drivers SET isavailable = true WHERE Id = @DriverId;
             ";
 
                 command.Parameters.AddWithValue("@Status", (int)RideStatus.Completed); // Završena vožnja
@@ -185,7 +185,7 @@ namespace VoziMe.Services
                 var command = connection.CreateCommand();
                 command.CommandText = @"
                 UPDATE Drivers
-                SET IsAvailable = 1
+                SET isavailable = true
                 WHERE Id = @DriverId;";
                 command.Parameters.AddWithValue("@DriverId", driverId);
 
@@ -257,6 +257,10 @@ namespace VoziMe.Services
         }
         public async Task<bool> UpdateDriverAvailabilityAsync(int driverId, double latitude, double longitude, bool isAvailable)
         {
+            if (latitude == 0 || longitude == 0)
+            {
+                return false;
+            }
             try
             {
                 using var connection = new NpgsqlConnection(_connectionString);
@@ -267,13 +271,13 @@ namespace VoziMe.Services
             UPDATE Drivers
             SET Latitude = @Latitude,
                 Longitude = @Longitude,
-                IsAvailable = @IsAvailable
+                isavailable = @isavailable
             WHERE Id = @DriverId;
         ";
 
                 command.Parameters.AddWithValue("@Latitude", latitude);
                 command.Parameters.AddWithValue("@Longitude", longitude);
-                command.Parameters.AddWithValue("@IsAvailable", isAvailable ? 1 : 0);
+                command.Parameters.AddWithValue("@isavailable", isAvailable ? 1 : 0);
                 command.Parameters.AddWithValue("@DriverId", driverId);
 
                 await command.ExecuteNonQueryAsync();
@@ -305,13 +309,57 @@ namespace VoziMe.Services
                     Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
                     Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
                     Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
-                    IsAvailable = reader.GetInt32(reader.GetOrdinal("IsAvailable")) == 1
+                    IsAvailable = reader.GetBoolean(reader.GetOrdinal("isavailable"))
                 };
             }
 
             return null;
         }
+        public async Task<List<Driver>> GetAllAvailableDriversAsync()
+        {
+            var drivers = new List<Driver>();
 
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+SELECT d.Id, d.UserId, u.Name, u.ProfileImage, d.Car, d.Latitude, d.Longitude, d.Rating, d.isavailable
+FROM Drivers d
+JOIN Users u ON d.UserId = u.Id
+WHERE d.isavailable = true;
+
+
+
+        ";
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    drivers.Add(new Driver
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        ProfileImage = reader.IsDBNull(reader.GetOrdinal("ProfileImage")) ? null : reader.GetString(reader.GetOrdinal("ProfileImage")),
+                        Car = reader.GetString(reader.GetOrdinal("Car")),
+                        Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
+                        Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
+                        Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                        IsAvailable = reader.GetBoolean(reader.GetOrdinal("isavailable"))
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Greška kod učitavanja vozača: " + ex.Message);
+            }
+
+            return drivers;
+        }
 
     }
 }
+
