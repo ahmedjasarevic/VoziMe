@@ -2,6 +2,9 @@
 using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 
 namespace VoziMe.Views;
 
@@ -9,6 +12,7 @@ public partial class RideTrackingPage : ContentPage
 {
     private readonly Driver _driver;
     private readonly Location _pickupLocation;
+    private readonly Location _destinationLocation;  // Dodana destinacija
     private readonly LocationService _locationService;
     private readonly DriverService _driverService;
 
@@ -16,13 +20,17 @@ public partial class RideTrackingPage : ContentPage
     private bool _isDriverArrived;
     private int _selectedRating = 0;
     private int _currentUserId; // Dodano polje za korisnički ID
+    private Polyline _routeLine; // Dodano za prikazivanje rute
 
-    public RideTrackingPage(Driver driver, Location pickupLocation, int currentUserId)
+    private string _googleApiKey = "AIzaSyCBd-dkJ39xZnNFXLUIfRpwdVkFtfURhEY"; // Unesi tvoj API ključ ovde
+
+    public RideTrackingPage(Driver driver, Location pickupLocation, Location destinationLocation, int currentUserId)
     {
         InitializeComponent();
 
         _driver = driver;
         _pickupLocation = pickupLocation;
+        _destinationLocation = destinationLocation; // Postavi destinaciju
         _currentUserId = currentUserId; // Postavi korisnički ID
 
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
@@ -58,6 +66,9 @@ public partial class RideTrackingPage : ContentPage
             Type = PinType.SavedPin
         };
         TrackingMap.Pins.Add(_driverPin);
+
+        // Prikazivanje rute do destinacije
+        await DrawRouteAsync(_pickupLocation, _destinationLocation);
 
         StartDriverLocationUpdates();
     }
@@ -172,5 +183,113 @@ public partial class RideTrackingPage : ContentPage
         {
             await DisplayAlert("Greška", "Nije moguće snimiti ocjenu.", "OK");
         }
+    }
+
+    private async Task DrawRouteAsync(Location origin, Location destination)
+    {
+        try
+        {
+            Console.WriteLine($"Origin: {origin.Latitude},{origin.Longitude}");
+            Console.WriteLine($"Destination: {destination.Latitude},{destination.Longitude}");
+
+            var httpClient = new HttpClient();
+            var url = $"https://maps.googleapis.com/maps/api/directions/json?origin={origin.Latitude},{origin.Longitude}&destination={destination.Latitude},{destination.Longitude}&mode=driving&key={_googleApiKey}";
+            var response = await httpClient.GetStringAsync(url);
+            Console.WriteLine($"API Response: {response}");
+
+            var directions = JsonSerializer.Deserialize<DirectionsResponse>(response);
+
+            if (directions?.Routes?.Count > 0)
+            {
+                var points = DecodePolyline(directions.Routes.First().OverviewPolyline.Points);
+
+                _routeLine = new Polyline
+                {
+                    StrokeColor = Colors.Blue,
+                    StrokeWidth = 5
+                };
+
+                foreach (var point in points)
+                {
+                    _routeLine.Geopath.Add(point);
+                }
+
+                // Očisti prethodne elemente pre dodavanja nove rute
+                TrackingMap.MapElements.Clear();
+                TrackingMap.MapElements.Add(_routeLine);
+
+                // Proračunavanje centra i radijusa
+                var minLat = points.Min(p => p.Latitude);
+                var maxLat = points.Max(p => p.Latitude);
+                var minLon = points.Min(p => p.Longitude);
+                var maxLon = points.Max(p => p.Longitude);
+
+                var center = new Location((minLat + maxLat) / 2, (minLon + maxLon) / 2);
+                var radius = Location.CalculateDistance(
+                    new Location(minLat, minLon),
+                    new Location(maxLat, maxLon),
+                    DistanceUnits.Kilometers
+                ) / 2;
+
+                // Postavljanje mape da prati rutu sa centrom i radijusom
+                TrackingMap.MoveToRegion(MapSpan.FromCenterAndRadius(center, Distance.FromKilometers(radius)));
+            }
+            else
+            {
+                Console.WriteLine("No routes found in the response.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Greška kod prikaza rute: {ex.Message}");
+        }
+    }
+
+
+    private List<Location> DecodePolyline(string encodedPoints)
+    {
+        if (string.IsNullOrWhiteSpace(encodedPoints)) return new List<Location>();
+
+        var polylineChars = encodedPoints.ToCharArray();
+        var index = 0;
+
+        var lat = 0;
+        var lng = 0;
+        var poly = new List<Location>();
+
+        while (index < polylineChars.Length)
+        {
+            int b, shift = 0, result = 0;
+            do
+            {
+                b = polylineChars[index++] - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            }
+            while (b >= 0x20);
+            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+            do
+            {
+                b = polylineChars[index++] - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            }
+            while (b >= 0x20);
+            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+
+            var position = new Location(
+                lat / 1E5,
+                lng / 1E5
+            );
+
+            poly.Add(position);
+        }
+
+        return poly;
     }
 }

@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Maui.Controls.Maps;
+﻿using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
@@ -43,7 +42,7 @@ public partial class DriverSelectionPage : ContentPage
 
             if (placemark != null)
             {
-                string address = $"{placemark.Thoroughfare} {placemark.SubThoroughfare}, { placemark.Locality} ";
+                string address = $"{placemark.Thoroughfare} {placemark.SubThoroughfare}, {placemark.Locality} ";
                 SourceEntry.Text = address;
             }
             else
@@ -61,9 +60,7 @@ public partial class DriverSelectionPage : ContentPage
     {
         try
         {
-            var location = await
-
-_locationService.GetCurrentLocationAsync();
+            var location = await _locationService.GetCurrentLocationAsync();
             _currentLatitude = location.Latitude;
             _currentLongitude = location.Longitude;
 
@@ -79,18 +76,15 @@ _locationService.GetCurrentLocationAsync();
         }
     }
 
-
     private async Task LoadDriversAsync()
     {
         try
         {
             LocationMap.Pins.Clear();
 
-            var drivers = await _driverService.GetAllAvailableDriversAsync(); // koristi sve dostupne
+            var drivers = await _driverService.GetAllAvailableDriversAsync();
             Console.WriteLine($"Broj dostupnih vozača: {drivers.Count}");
             DriversCollection.ItemsSource = drivers;
-
-
 
             foreach (var driver in drivers)
             {
@@ -113,6 +107,7 @@ _locationService.GetCurrentLocationAsync();
             await DisplayAlert("Greška", $"Neuspješno učitavanje vozača: {ex.Message}", "OK");
         }
     }
+
     private async Task<string> GetAddressFromCoordinatesAsync(double latitude, double longitude)
     {
         try
@@ -134,7 +129,6 @@ _locationService.GetCurrentLocationAsync();
     }
 
     private async void SourceEntry_Completed(object sender, EventArgs e)
-
     {
         await GeocodeAndCenter(SourceEntry.Text);
     }
@@ -150,7 +144,6 @@ _locationService.GetCurrentLocationAsync();
                 _currentLatitude = location.Latitude;
                 _currentLongitude = location.Longitude;
 
-
                 LocationMap.MoveToRegion(MapSpan.FromCenterAndRadius(
                     new Location(_currentLatitude, _currentLongitude),
                     Distance.FromKilometers(1)));
@@ -165,7 +158,6 @@ _locationService.GetCurrentLocationAsync();
     }
 
     private async Task HandleDriverSelection(Driver selectedDriver)
-
     {
         var destination = DestinationEntry.Text;
         if (string.IsNullOrWhiteSpace(destination))
@@ -198,7 +190,9 @@ _locationService.GetCurrentLocationAsync();
         if (success)
         {
             await DisplayAlert("Uspjeh", "Vožnja naručena.", "OK");
-            await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude), _userService.CurrentUser.Id));
+
+            // Corrected navigation to RideTrackingPage
+            await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude), loc, _userService.CurrentUser.Id));
         }
         else
         {
@@ -210,7 +204,6 @@ _locationService.GetCurrentLocationAsync();
     {
         if (sender is Frame frame && frame.BindingContext is Driver driver)
             await HandleDriverSelection(driver);
-
     }
 
     private async void RefreshDrivers_Clicked(object sender, EventArgs e)
@@ -228,7 +221,6 @@ _locationService.GetCurrentLocationAsync();
 
     // --------------------------- AUTOCOMPLETE 
 
-
     private async void SourceEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         await FetchPredictionsAsync(e.NewTextValue, isSource: true);
@@ -239,9 +231,7 @@ _locationService.GetCurrentLocationAsync();
         await FetchPredictionsAsync(e.NewTextValue, isSource: false);
     }
 
-    private async Task
-
-FetchPredictionsAsync(string input, bool isSource)
+    private async Task FetchPredictionsAsync(string input, bool isSource)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -254,9 +244,7 @@ FetchPredictionsAsync(string input, bool isSource)
         {
             var url = $"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={Uri.EscapeDataString(input)}&types=geocode&key={_googleApiKey}";
             var client = new HttpClient();
-            var response = await
-
-client.GetStringAsync(url);
+            var response = await client.GetStringAsync(url);
 
             var result = JsonSerializer.Deserialize<GooglePlacesResponse>(response);
             if (isSource)
@@ -286,9 +274,7 @@ client.GetStringAsync(url);
         }
     }
 
-    private void
-
-DestinationSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void DestinationSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection.FirstOrDefault() is Prediction selected)
         {
@@ -302,7 +288,6 @@ DestinationSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs
     {
         [JsonPropertyName("predictions")]
         public List<Prediction> Predictions { get; set; }
-
     }
 
     public class Prediction
