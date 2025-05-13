@@ -83,11 +83,22 @@ public partial class DriverSelectionPage : ContentPage
             LocationMap.Pins.Clear();
 
             var drivers = await _driverService.GetAllAvailableDriversAsync();
-            Console.WriteLine($"Broj dostupnih vozača: {drivers.Count}");
-            DriversCollection.ItemsSource = drivers;
+            if (drivers == null || drivers.Count == 0)
+            {
+                Console.WriteLine("Nema dostupnih vozača.");
+                return;
+            }
 
             foreach (var driver in drivers)
             {
+                if (driver.Id <= 0 || string.IsNullOrWhiteSpace(driver.Name))
+                {
+                    Console.WriteLine($"Vozač sa nevalidnim ID ({driver.Id}) preskočen.");
+                    continue;
+                }
+
+                Console.WriteLine($"Driver loaded: {driver.Name} (ID: {driver.Id})");
+
                 if (driver.Latitude == 0 || driver.Longitude == 0)
                     continue;
 
@@ -101,6 +112,8 @@ public partial class DriverSelectionPage : ContentPage
 
                 LocationMap.Pins.Add(pin);
             }
+
+            DriversCollection.ItemsSource = drivers;
         }
         catch (Exception ex)
         {
@@ -159,6 +172,15 @@ public partial class DriverSelectionPage : ContentPage
 
     private async Task HandleDriverSelection(Driver selectedDriver)
     {
+        if (selectedDriver == null || selectedDriver.Id <= 0)
+        {
+            Console.WriteLine("Driver not found or invalid.");
+            await DisplayAlert("Greška", "Odabrani vozač nije validan.", "OK");
+            return;
+        }
+
+        Console.WriteLine($"Odabran vozač: {selectedDriver.Name} (ID: {selectedDriver.Id})");
+
         var destination = DestinationEntry.Text;
         if (string.IsNullOrWhiteSpace(destination))
         {
@@ -174,29 +196,36 @@ public partial class DriverSelectionPage : ContentPage
             return;
         }
 
-        bool confirm = await DisplayAlert("Potvrda", $"Naručiti vožnju sa vozačem {selectedDriver.Name} prema: {destination}?", "Da", "Ne");
-        if (!confirm) return;
-
-        var success = await _driverService.BookRideAsync(
-            _userService.CurrentUser.Id,
-            selectedDriver.Id,
-            _currentLatitude,
-            _currentLongitude,
-            SourceEntry.Text ?? "Trenutna lokacija",
-            loc.Latitude,
-            loc.Longitude,
-            destination);
-
-        if (success)
+        // Get current user
+        var currentUser = await _userService.GetCurrentUserAsync();
+        if (currentUser == null || currentUser.Id <= 0)
         {
-            await DisplayAlert("Uspjeh", "Vožnja naručena.", "OK");
+            await DisplayAlert("Greška", "Korisnik nije validan.", "OK");
+            return;
+        }
 
-            // Corrected navigation to RideTrackingPage
-            await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude), loc, _userService.CurrentUser.Id));
+        // Call to book the ride
+        var isBooked = await _driverService.BookRideAsync(
+            customerId: currentUser.Id,
+            driverId: selectedDriver.Id,
+            sourceLatitude: _currentLatitude,
+            sourceLongitude: _currentLongitude,
+            sourceAddress: SourceEntry.Text,
+            destLatitude: loc.Latitude,
+            destLongitude: loc.Longitude,
+            destAddress: destination
+        );
+
+        if (isBooked)
+        {
+            await DisplayAlert("Uspjeh", "Vožnja je uspješno zakazana.", "OK");
+
+            // Send notification to driver on dashboard
+            await _driverService.NotifyDriverWhenSelected(selectedDriver.Id);
         }
         else
         {
-            await DisplayAlert("Greška", "Naručivanje nije uspjelo.", "OK");
+            await DisplayAlert("Greška", "Neuspješno zakazivanje vožnje.", "OK");
         }
     }
 

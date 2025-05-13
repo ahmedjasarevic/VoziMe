@@ -3,7 +3,7 @@ using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+
 
 
 namespace VoziMe.Views;
@@ -205,8 +205,8 @@ public partial class RideTrackingPage : ContentPage
 
                 _routeLine = new Polyline
                 {
-                    StrokeColor = Colors.Blue,
-                    StrokeWidth = 5
+                    StrokeColor = Colors.Green,
+                    StrokeWidth = 10
                 };
 
                 foreach (var point in points)
@@ -245,51 +245,36 @@ public partial class RideTrackingPage : ContentPage
         }
     }
 
-
     private List<Location> DecodePolyline(string encodedPoints)
     {
-        if (string.IsNullOrWhiteSpace(encodedPoints)) return new List<Location>();
-
-        var polylineChars = encodedPoints.ToCharArray();
-        var index = 0;
-
-        var lat = 0;
-        var lng = 0;
         var poly = new List<Location>();
+        int index = 0, lat = 0, lng = 0;
 
-        while (index < polylineChars.Length)
+        while (index < encodedPoints.Length)
         {
             int b, shift = 0, result = 0;
             do
             {
-                b = polylineChars[index++] - 63;
+                b = encodedPoints[index++] - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
-            }
-            while (b >= 0x20);
-            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lat += dlat;
+            } while (b >= 0x20);
+            lat += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
 
             shift = 0;
             result = 0;
             do
             {
-                b = polylineChars[index++] - 63;
+                b = encodedPoints[index++] - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
-            }
-            while (b >= 0x20);
-            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lng += dlng;
+            } while (b >= 0x20);
+            lng += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
 
-            var position = new Location(
-                lat / 1E5,
-                lng / 1E5
-            );
-
-            poly.Add(position);
+            poly.Add(new Location(lat / 1E5, lng / 1E5));
         }
 
         return poly;
     }
+
 }
