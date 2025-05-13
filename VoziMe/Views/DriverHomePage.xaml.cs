@@ -7,7 +7,10 @@ using System.Text.Json;
 using Supabase;
 using Supabase.Realtime;
 using Supabase.Realtime.Models;
+using Supabase.Realtime.Socket;
 using Supabase.Postgrest;
+using Microsoft.Maui.Controls;
+
 
 using Client = Supabase.Client;
 using Supabase.Realtime.PostgresChanges;
@@ -37,11 +40,18 @@ public partial class DriverHomePage : ContentPage
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
         _driverId = driverId;
 
-        // Initialize Supabase
-        _supabaseClient = new Supabase.Client("YOUR_SUPABASE_URL", "YOUR_SUPABASE_ANON_KEY");
+        // Inicijalizacija Supabase
+        _supabaseClient = new Supabase.Client(
+            "https://vfqrsstbgqfwukfgslyo.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmcXJzc3RiZ3Fmd3VrZmdzbHlvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjAyMzY1MiwiZXhwIjoyMDYxNTk5NjUyfQ.DqGBnnje3__AhgluVi3MBwbQsTHztC0Ele2d4wLo66Y"
+        );
+
+        // Priključi se na real-time server
+        _supabaseClient.Realtime.Connect();
 
         InitializeMap();
     }
+
 
     protected override async void OnAppearing()
     {
@@ -49,34 +59,71 @@ public partial class DriverHomePage : ContentPage
         await LoadDriverAvailability();
 
         // Subscribe to Supabase real-time notifications for new rides
-        SubscribeToRides();
-    }
+        await SubscribeToRides();
 
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        // Unsubscribe from Supabase real-time notifications when leaving the page
-        _realtimeChannel?.Unsubscribe();
+        // Subscribe to MessagingCenter for local messages
+        MessagingCenter.Subscribe<DriverService, int>(this, "DriverSelected", async (sender, driverId) =>
+        {
+            if (driverId == _driverId)
+            {
+                await ShowRideNotification();
+            }
+        });
     }
-    private async void SubscribeToRides()
+    private async Task SubscribeToRides()
     {
         try
         {
-            // Kreiraj kanal za tabelu "rides" u public šemi
+            Console.WriteLine("Pokušavam se pretplatiti na 'rides' kanal...");
+
+            if (_supabaseClient.Realtime.Socket?.IsConnected != true)
+            {
+                Console.WriteLine("Socket nije povezan. Pokušavam se povezati...");
+                await _supabaseClient.Realtime.ConnectAsync();
+                await Task.Delay(2000); // Čekaj 2 sekunde da se socket poveže
+            }
+
+            if (_supabaseClient.Realtime.Socket?.IsConnected != true)
+            {
+                Console.WriteLine("Socket i dalje nije povezan. Provjeri svoje Supabase URL i API ključ.");
+                return;
+            }
+
             _realtimeChannel = _supabaseClient.Realtime.Channel("public:rides");
 
-            // Dodaj listener za promene u bazi
-            _realtimeChannel.AddPostgrestChangesListener("INSERT", (message) =>
+            // Dodaj handler za promjene
+            _realtimeChannel.AddPostgresChangeHandler(PostgresChangesOptions.ListenType.All, (sender, change) =>
             {
-                var payload = message.Payload;
-                Console.WriteLine("Nova vožnja je dodana: " + payload);
-                NotifyDriverOnDashboard();
+                Console.WriteLine("Primljena nova promjena na kanalu 'rides'.");
+                if (change.Payload?.Data?.Record != null)
+                {
+                    Console.WriteLine($"Nova vožnja: {JsonSerializer.Serialize(change.Payload.Data.Record)}");
+                    MessagingCenter.Send(this, "NewRideNotification", "Nova vožnja je zakazana!");
+                }
+                else
+                {
+                    Console.WriteLine("Nema podataka u promjeni.");
+                }
             });
 
-            // Aktiviraj pretplatu na događaje
-            await _realtimeChannel.Subscribe();
+            // Pokušaj pretplate
+            var result = await _realtimeChannel.Subscribe();
+            Console.WriteLine($"Pretplata na kanal 'rides' je aktivna: {result.State}");
 
-            Console.WriteLine("Pretplata na 'rides' je aktivna.");
+            // Provjeri ponovo status socket-a
+            if (_supabaseClient.Realtime.Socket?.IsConnected == true)
+            {
+                Console.WriteLine("Socket je sada povezan i pretplata je aktivna.");
+            }
+            else
+            {
+                Console.WriteLine("Socket nije povezan ni nakon pretplate.");
+            }
+            Console.WriteLine($"Kanal: {_realtimeChannel}");
+
+
+
+
         }
         catch (Exception ex)
         {
@@ -84,23 +131,26 @@ public partial class DriverHomePage : ContentPage
         }
     }
 
-
-    private void HandleNewRide(object payload)
+    protected override void OnDisappearing()
     {
-        var ride = payload as Dictionary<string, object>;
-        if (ride != null)
-        {
-            // Handle new ride here, for example, trigger notification
-            NotifyDriverOnDashboard();
-        }
+        base.OnDisappearing();
+        _realtimeChannel?.Unsubscribe();
+
+        // Unsubscribe from MessagingCenter
+        MessagingCenter.Unsubscribe<DriverService, int>(this, "DriverSelected");
     }
+
+
+
+
 
     public async Task ShowRideNotification()
     {
         await DisplayAlert("Vožnja zakazana", "Nova vožnja je zakazana za vas.", "OK");
     }
 
-   
+    
+
 
     private async Task LoadDriverAvailability()
     {
@@ -128,8 +178,10 @@ public partial class DriverHomePage : ContentPage
 
     public async Task NotifyDriverOnDashboard()
     {
-        await ShowRideNotification();
+        // Ovdje možeš dodati logiku za lokalno slanje poruke
+        MessagingCenter.Send(this, "NewRideNotification", "Nova vožnja je zakazana!");
     }
+
 
     private async void InitializeMap()
     {

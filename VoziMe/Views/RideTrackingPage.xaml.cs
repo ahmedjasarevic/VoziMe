@@ -24,13 +24,12 @@ public partial class RideTrackingPage : ContentPage
 
     private string _googleApiKey = "AIzaSyCBd-dkJ39xZnNFXLUIfRpwdVkFtfURhEY"; // Unesi tvoj API ključ ovde
 
-    public RideTrackingPage(Driver driver, Location pickupLocation, Location destinationLocation, int currentUserId)
+    public RideTrackingPage(Driver driver, Location pickupLocation, int currentUserId)
     {
         InitializeComponent();
 
         _driver = driver;
         _pickupLocation = pickupLocation;
-        _destinationLocation = destinationLocation; // Postavi destinaciju
         _currentUserId = currentUserId; // Postavi korisnički ID
 
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();

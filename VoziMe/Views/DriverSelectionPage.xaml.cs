@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls.Maps;
+﻿
+using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
@@ -60,7 +61,9 @@ public partial class DriverSelectionPage : ContentPage
     {
         try
         {
-            var location = await _locationService.GetCurrentLocationAsync();
+            var location = await
+
+_locationService.GetCurrentLocationAsync();
             _currentLatitude = location.Latitude;
             _currentLongitude = location.Longitude;
 
@@ -76,29 +79,21 @@ public partial class DriverSelectionPage : ContentPage
         }
     }
 
+
     private async Task LoadDriversAsync()
     {
         try
         {
             LocationMap.Pins.Clear();
 
-            var drivers = await _driverService.GetAllAvailableDriversAsync();
-            if (drivers == null || drivers.Count == 0)
-            {
-                Console.WriteLine("Nema dostupnih vozača.");
-                return;
-            }
+            var drivers = await _driverService.GetAllAvailableDriversAsync(); // koristi sve dostupne
+            Console.WriteLine($"Broj dostupnih vozača: {drivers.Count}");
+            DriversCollection.ItemsSource = drivers;
+
+
 
             foreach (var driver in drivers)
             {
-                if (driver.Id <= 0 || string.IsNullOrWhiteSpace(driver.Name))
-                {
-                    Console.WriteLine($"Vozač sa nevalidnim ID ({driver.Id}) preskočen.");
-                    continue;
-                }
-
-                Console.WriteLine($"Driver loaded: {driver.Name} (ID: {driver.Id})");
-
                 if (driver.Latitude == 0 || driver.Longitude == 0)
                     continue;
 
@@ -112,15 +107,12 @@ public partial class DriverSelectionPage : ContentPage
 
                 LocationMap.Pins.Add(pin);
             }
-
-            DriversCollection.ItemsSource = drivers;
         }
         catch (Exception ex)
         {
             await DisplayAlert("Greška", $"Neuspješno učitavanje vozača: {ex.Message}", "OK");
         }
     }
-
     private async Task<string> GetAddressFromCoordinatesAsync(double latitude, double longitude)
     {
         try
@@ -142,6 +134,7 @@ public partial class DriverSelectionPage : ContentPage
     }
 
     private async void SourceEntry_Completed(object sender, EventArgs e)
+
     {
         await GeocodeAndCenter(SourceEntry.Text);
     }
@@ -157,6 +150,7 @@ public partial class DriverSelectionPage : ContentPage
                 _currentLatitude = location.Latitude;
                 _currentLongitude = location.Longitude;
 
+
                 LocationMap.MoveToRegion(MapSpan.FromCenterAndRadius(
                     new Location(_currentLatitude, _currentLongitude),
                     Distance.FromKilometers(1)));
@@ -171,16 +165,8 @@ public partial class DriverSelectionPage : ContentPage
     }
 
     private async Task HandleDriverSelection(Driver selectedDriver)
+
     {
-        if (selectedDriver == null || selectedDriver.Id <= 0)
-        {
-            Console.WriteLine("Driver not found or invalid.");
-            await DisplayAlert("Greška", "Odabrani vozač nije validan.", "OK");
-            return;
-        }
-
-        Console.WriteLine($"Odabran vozač: {selectedDriver.Name} (ID: {selectedDriver.Id})");
-
         var destination = DestinationEntry.Text;
         if (string.IsNullOrWhiteSpace(destination))
         {
@@ -196,36 +182,27 @@ public partial class DriverSelectionPage : ContentPage
             return;
         }
 
-        // Get current user
-        var currentUser = await _userService.GetCurrentUserAsync();
-        if (currentUser == null || currentUser.Id <= 0)
+        bool confirm = await DisplayAlert("Potvrda", $"Naručiti vožnju sa vozačem {selectedDriver.Name} prema: {destination}?", "Da", "Ne");
+        if (!confirm) return;
+
+        var success = await _driverService.BookRideAsync(
+            _userService.CurrentUser.Id,
+            selectedDriver.Id,
+            _currentLatitude,
+            _currentLongitude,
+            SourceEntry.Text ?? "Trenutna lokacija",
+            loc.Latitude,
+            loc.Longitude,
+            destination);
+
+        if (success)
         {
-            await DisplayAlert("Greška", "Korisnik nije validan.", "OK");
-            return;
-        }
-
-        // Call to book the ride
-        var isBooked = await _driverService.BookRideAsync(
-            customerId: currentUser.Id,
-            driverId: selectedDriver.Id,
-            sourceLatitude: _currentLatitude,
-            sourceLongitude: _currentLongitude,
-            sourceAddress: SourceEntry.Text,
-            destLatitude: loc.Latitude,
-            destLongitude: loc.Longitude,
-            destAddress: destination
-        );
-
-        if (isBooked)
-        {
-            await DisplayAlert("Uspjeh", "Vožnja je uspješno zakazana.", "OK");
-
-            // Send notification to driver on dashboard
-            await _driverService.NotifyDriverWhenSelected(selectedDriver.Id);
+            await DisplayAlert("Uspjeh", "Vožnja naručena.", "OK");
+            await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude), _userService.CurrentUser.Id));
         }
         else
         {
-            await DisplayAlert("Greška", "Neuspješno zakazivanje vožnje.", "OK");
+            await DisplayAlert("Greška", "Naručivanje nije uspjelo.", "OK");
         }
     }
 
@@ -233,6 +210,7 @@ public partial class DriverSelectionPage : ContentPage
     {
         if (sender is Frame frame && frame.BindingContext is Driver driver)
             await HandleDriverSelection(driver);
+
     }
 
     private async void RefreshDrivers_Clicked(object sender, EventArgs e)
@@ -250,6 +228,7 @@ public partial class DriverSelectionPage : ContentPage
 
     // --------------------------- AUTOCOMPLETE 
 
+
     private async void SourceEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         await FetchPredictionsAsync(e.NewTextValue, isSource: true);
@@ -260,7 +239,9 @@ public partial class DriverSelectionPage : ContentPage
         await FetchPredictionsAsync(e.NewTextValue, isSource: false);
     }
 
-    private async Task FetchPredictionsAsync(string input, bool isSource)
+    private async Task
+
+FetchPredictionsAsync(string input, bool isSource)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -273,7 +254,9 @@ public partial class DriverSelectionPage : ContentPage
         {
             var url = $"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={Uri.EscapeDataString(input)}&types=geocode&key={_googleApiKey}";
             var client = new HttpClient();
-            var response = await client.GetStringAsync(url);
+            var response = await
+
+client.GetStringAsync(url);
 
             var result = JsonSerializer.Deserialize<GooglePlacesResponse>(response);
             if (isSource)
@@ -303,7 +286,9 @@ public partial class DriverSelectionPage : ContentPage
         }
     }
 
-    private void DestinationSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void
+
+DestinationSuggestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection.FirstOrDefault() is Prediction selected)
         {
@@ -317,6 +302,7 @@ public partial class DriverSelectionPage : ContentPage
     {
         [JsonPropertyName("predictions")]
         public List<Prediction> Predictions { get; set; }
+
     }
 
     public class Prediction

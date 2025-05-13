@@ -13,12 +13,10 @@ namespace VoziMe.Services
 
 
         private readonly string _connectionString;
-        private readonly DriverHomePage _driverPage;
 
-        public DriverService(NpgsqlConnection connection, DriverHomePage driverPage)  // Pass it in the constructor
+        public DriverService(NpgsqlConnection connection)  // Pass it in the constructor
         {
             _connectionString = connection.ConnectionString;
-            _driverPage = driverPage;  // Assign it here
         }
         public async Task<List<Ride>> GetAvailableRidesAsync(int driverId)
         {
@@ -142,16 +140,8 @@ namespace VoziMe.Services
 
                 var isAvailable = (bool?)await checkDriverCommand.ExecuteScalarAsync();
 
-                if (isAvailable == null)
+                if (isAvailable == null || isAvailable == false)
                 {
-                    Console.WriteLine($"Driver with ID {driverId} not found.");
-                    await transaction.RollbackAsync();
-                    return false;
-                }
-
-                if (isAvailable == false)
-                {
-                    Console.WriteLine($"Driver with ID {driverId} is not available.");
                     await transaction.RollbackAsync();
                     return false;
                 }
@@ -160,7 +150,7 @@ namespace VoziMe.Services
                 var distance = CalculateDistance(sourceLatitude, sourceLongitude, destLatitude, destLongitude);
                 var price = decimal.Parse(CalculatePrice(distance).Replace("KM", "").Trim());
 
-                // Kreiraj vožnju i ažuriraj status vozača
+                // Kreiraj vožnju
                 var command = connection.CreateCommand();
                 command.CommandText = @"
             INSERT INTO Rides (CustomerId, DriverId, SourceLatitude, SourceLongitude, SourceAddress,
@@ -171,25 +161,23 @@ namespace VoziMe.Services
             UPDATE Drivers SET isavailable = false WHERE Id = @DriverId;
         ";
 
-                command.Parameters.AddWithValue("@CustomerId", NpgsqlTypes.NpgsqlDbType.Integer, customerId);
-                command.Parameters.AddWithValue("@DriverId", NpgsqlTypes.NpgsqlDbType.Integer, driverId);
-                command.Parameters.AddWithValue("@SourceLat", NpgsqlTypes.NpgsqlDbType.Double, sourceLatitude);
-                command.Parameters.AddWithValue("@SourceLong", NpgsqlTypes.NpgsqlDbType.Double, sourceLongitude);
-                command.Parameters.AddWithValue("@SourceAddr", NpgsqlTypes.NpgsqlDbType.Text, sourceAddress);
-                command.Parameters.AddWithValue("@DestLat", NpgsqlTypes.NpgsqlDbType.Double, destLatitude);
-                command.Parameters.AddWithValue("@DestLong", NpgsqlTypes.NpgsqlDbType.Double, destLongitude);
-                command.Parameters.AddWithValue("@DestAddr", NpgsqlTypes.NpgsqlDbType.Text, destAddress);
-                command.Parameters.AddWithValue("@Price", NpgsqlTypes.NpgsqlDbType.Numeric, price);
-                command.Parameters.AddWithValue("@Status", NpgsqlTypes.NpgsqlDbType.Integer, (int)RideStatus.Requested);
+                command.Parameters.AddWithValue("@CustomerId", customerId);
+                command.Parameters.AddWithValue("@DriverId", driverId);
+                command.Parameters.AddWithValue("@SourceLat", sourceLatitude);
+                command.Parameters.AddWithValue("@SourceLong", sourceLongitude);
+                command.Parameters.AddWithValue("@SourceAddr", sourceAddress);
+                command.Parameters.AddWithValue("@DestLat", destLatitude);
+                command.Parameters.AddWithValue("@DestLong", destLongitude);
+                command.Parameters.AddWithValue("@DestAddr", destAddress);
+                command.Parameters.AddWithValue("@Price", price);
+                command.Parameters.AddWithValue("@Status", (int)RideStatus.Requested);
 
                 await command.ExecuteNonQueryAsync();
 
-                // Notifikacija vozaču
-                var notificationSuccess = await NotifyDriverWhenSelected(driverId);
-          
+                // **POŠALJI OBAVIJEST VOZAČU**
+                MessagingCenter.Send(this, "DriverSelected", driverId);
 
                 await transaction.CommitAsync();
-                Console.WriteLine($"Ride successfully booked for driver ID {driverId}.");
                 return true;
             }
             catch (Exception ex)
@@ -398,29 +386,30 @@ namespace VoziMe.Services
             return null;
         }
 
-        public async Task<bool> NotifyDriverWhenSelected(int driverId)
-        {
-            try
-            {
-                var driver = await GetDriverByUserIdAsync(driverId);
-                if (driver == null)
-                {
-                    return false;
-                }
+       
 
-                // This is where you could integrate the real-time notification system
-                // For now, we are simply showing a notification on the driver's dashboard
-                await _driverPage.NotifyDriverOnDashboard();
-                return true;
-            }
-            catch (Exception ex)
+public async Task<bool> NotifyDriverWhenSelected(int driverId)
+    {
+        try
+        {
+            var driver = await GetDriverByUserIdAsync(driverId);
+            if (driver == null)
             {
-                Console.WriteLine($"Error notifying driver: {ex.Message}");
                 return false;
             }
-        }
 
-        public async Task<Ride> GetActiveRideAsync(int driverId)
+            // Šalje poruku vozaču
+            MessagingCenter.Send(this, "DriverSelected", driverId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error notifying driver: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<Ride> GetActiveRideAsync(int driverId)
         {
             Ride activeRide = null;
 
