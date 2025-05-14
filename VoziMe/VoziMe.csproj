@@ -57,27 +57,28 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="appsettings.json" />
 	  <None Remove="Resources\Images\taxi_logo.jpg" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="appsettings.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
+
 
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.4" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.60" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.60" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.4" />
 		<PackageReference Include="Microsoft.Maui.Controls.Maps" Version="9.0.60" />
 		<PackageReference Include="Microsoft.Maui.Maps" Version="9.0.60" />
 		<PackageReference Include="Npgsql" Version="9.0.3" />
 		<PackageReference Include="Supabase" Version="1.1.1" />
+		<PackageReference Include="supabase-csharp" Version="0.16.2" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
 	</ItemGroup>
 

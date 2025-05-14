@@ -4,6 +4,7 @@ namespace VoziMe.Services;
 
 public class LocationService
 {
+
     public async Task<(double Latitude, double Longitude)> GetCurrentLocationAsync()
     {
         try

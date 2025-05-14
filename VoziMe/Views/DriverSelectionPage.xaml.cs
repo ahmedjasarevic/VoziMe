@@ -43,7 +43,7 @@ public partial class DriverSelectionPage : ContentPage
 
             if (placemark != null)
             {
-                string address = $"{placemark.Thoroughfare} {placemark.SubThoroughfare}, { placemark.Locality} ";
+                string address = $"{placemark.Thoroughfare} {placemark.SubThoroughfare}, {placemark.Locality} ";
                 SourceEntry.Text = address;
             }
             else
