@@ -60,7 +60,7 @@ public partial class RideTrackingPage : ContentPage
         var driverLoc = new Location(_driver.Latitude, _driver.Longitude);
         _driverPin = new Pin
         {
-            Label = _driver.Name,
+            Label = string.IsNullOrEmpty(_driver.Name) ? "Vozač" : _driver.Name,
             Location = driverLoc,
             Type = PinType.SavedPin
         };

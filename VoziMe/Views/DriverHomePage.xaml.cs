@@ -6,14 +6,15 @@ using VoziMe.Services;
 using System.Text.Json;
 using Supabase;
 using Supabase.Realtime;
-using Supabase.Realtime.Models;
-using Supabase.Realtime.Socket;
-using Supabase.Postgrest;
-using Microsoft.Maui.Controls;
-
-
-using Client = Supabase.Client;
 using Supabase.Realtime.PostgresChanges;
+using Microsoft.Maui.Controls;
+using System.Text.Json;
+
+
+using Supabase.Realtime.PostgresChanges;
+using static Supabase.Realtime.PostgresChanges.PostgresChangesOptions;
+using Supabase.Realtime.Exceptions;
+using Supabase.Realtime.Interfaces;
 
 
 namespace VoziMe.Views;
@@ -29,9 +30,13 @@ public partial class DriverHomePage : ContentPage
     private Pin _driverPin;
     private Polyline _routeLine;
     private RealtimeChannel _realtimeChannel;
+    private Supabase.Client _supabaseClient;
+    private Location _pickupLocation;
+    private Driver _driver;
+    private bool _rideHandled = false;
 
-    // Initialize Supabase client
-    private readonly Supabase.Client _supabaseClient;
+
+
 
     public DriverHomePage(int driverId)
     {
@@ -39,29 +44,127 @@ public partial class DriverHomePage : ContentPage
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
         _driverId = driverId;
+        _driver = new Driver();
+        _driver.Id = driverId;
 
-        // Inicijalizacija Supabase
-        _supabaseClient = new Supabase.Client(
-            "https://vfqrsstbgqfwukfgslyo.supabase.co",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmcXJzc3RiZ3Fmd3VrZmdzbHlvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjAyMzY1MiwiZXhwIjoyMDYxNTk5NjUyfQ.DqGBnnje3__AhgluVi3MBwbQsTHztC0Ele2d4wLo66Y"
-        );
-
-        // Priključi se na real-time server
-        _supabaseClient.Realtime.Connect();
-
+        // Initialize the map first
         InitializeMap();
+
+        // Initialize Supabase client asynchronously
+        Task.Run(async () => await InitializeSupabaseClientAsync());
+
     }
 
+    private async Task InitializeSupabaseClientAsync()
+    {
+     
+        try
+        {
+            if (_supabaseClient == null)
+            {
+                // Kreiraj Supabase klijent
+                _supabaseClient = new Supabase.Client(
+                    "https://vfqrsstbgqfwukfgslyo.supabase.co",
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmcXJzc3RiZ3Fmd3VrZmdzbHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwMjM2NTIsImV4cCI6MjA2MTU5OTY1Mn0.JdvWKRstpHivjmG7DpkwoxvyIxON_yey7P_mfY8KVgg",
+                    new Supabase.SupabaseOptions
+                    {
+                        AutoConnectRealtime = true
+                    });
+
+                // Inicijalizuj Supabase klijent
+                await _supabaseClient.InitializeAsync();
+
+                _supabaseClient.Realtime.AddDebugHandler((sender, message, ex) =>
+                {
+                    try
+                    {
+                        // Loguj celu poruku da vidiš šta dolazi
+                        Console.WriteLine($"Realtime Debug: {message}");
+
+                        // Pronađi poziciju prvog '{' karaktera
+                        int jsonStartIndex = message.IndexOf('{');
+                        if (jsonStartIndex != -1)
+                        {
+                            // Izdvojimo samo deo koji je validan JSON
+                            string jsonMessage = message.Substring(jsonStartIndex);
+
+                            // Pokušaj da parsiraš JSON
+                            using (var jsonDoc = JsonDocument.Parse(jsonMessage))
+                            {
+                                var payload = jsonDoc.RootElement.GetProperty("payload");
+                                var data = payload.GetProperty("data");
+                                var record = data.GetProperty("record");
+
+                                // Ekstraktuj relevantne podatke
+                                var driverId = record.GetProperty("driverid").GetInt32();
+                                var customerId = record.GetProperty("customerid").GetInt32();
+                                var sourceLatitude = record.GetProperty("sourcelatitude").GetDouble();
+                                var sourceLongitude = record.GetProperty("sourcelongitude").GetDouble();
+                                var destinationLatitude = record.GetProperty("destinationlatitude").GetDouble();
+                                var destinationLongitude = record.GetProperty("destinationlongitude").GetDouble();
+                                var sourceAddress = record.GetProperty("sourceaddress").GetString();
+                                var destinationAddress = record.GetProperty("destinationaddress").GetString();
+                                
+                                
+
+                                Console.WriteLine($"Primljeni driverid: {driverId}");
+
+                                // Ako je vožnja namijenjena trenutnom vozaču
+                                if (driverId == _driverId && !_rideHandled)
+                                {
+                                    // Ažuriranje vožnje
+                                    _pickupLocation = new Location(sourceLatitude, sourceLongitude);
+                                    var destinationLocation = new Location(destinationLatitude, destinationLongitude);
+                                    _rideHandled = true;
+
+
+                                    // Pokretanje RideTrackingPage sa odgovarajućim podacima
+                                    MainThread.BeginInvokeOnMainThread(async () =>
+                                    {
+                                        await DisplayAlert("Odabrani ste za vožnju", $"Nova vožnja je zakazana od {sourceAddress} do {destinationAddress}.", "OK");
+                                        await Navigation.PushAsync(new RideTrackingPage(_driver, _pickupLocation, customerId));
+                                    });
+                                }
+                            }
+                        }
+                        else
+                        {
+
+                            // Ako ne možeš da nađeš '{', onda nije validan JSON
+                            Console.WriteLine("Poruka nije validan JSON!");
+                        }
+                    }
+                    catch (Exception parseEx)
+                    {
+                        Console.WriteLine($"Greška pri parsiranju JSON-a: {parseEx.Message}");
+                    }
+                });
+
+                // Pretplati se na kanal
+                var realtimeChannel = _supabaseClient.Realtime.Channel("realtime", "public", "rides");
+                await realtimeChannel.Subscribe();
+                Console.WriteLine("Uspešno pretplaćen na rides kanal!");
+
+                Console.WriteLine("Supabase klijent inicijalizovan!");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Greška pri inicijalizaciji: {ex.Message}");
+        }
+    }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         await LoadDriverAvailability();
 
-        // Subscribe to Supabase real-time notifications for new rides
-        await SubscribeToRides();
+        // Only subscribe if client is initialized
+        if (_supabaseClient?.Realtime != null)
+        {
+            await SubscribeToRides();
+        }
 
-        // Subscribe to MessagingCenter for local messages
         MessagingCenter.Subscribe<DriverService, int>(this, "DriverSelected", async (sender, driverId) =>
         {
             if (driverId == _driverId)
@@ -70,64 +173,64 @@ public partial class DriverHomePage : ContentPage
             }
         });
     }
+
     private async Task SubscribeToRides()
     {
         try
         {
-            Console.WriteLine("Pokušavam se pretplatiti na 'rides' kanal...");
-
-            if (_supabaseClient.Realtime.Socket?.IsConnected != true)
+            // Provjeri da li je klijent spreman
+            if (_supabaseClient?.Realtime == null)
             {
-                Console.WriteLine("Socket nije povezan. Pokušavam se povezati...");
-                await _supabaseClient.Realtime.ConnectAsync();
-                await Task.Delay(2000); // Čekaj 2 sekunde da se socket poveže
-            }
-
-            if (_supabaseClient.Realtime.Socket?.IsConnected != true)
-            {
-                Console.WriteLine("Socket i dalje nije povezan. Provjeri svoje Supabase URL i API ključ.");
+                Console.WriteLine("Realtime nije dostupan!");
                 return;
             }
 
-            _realtimeChannel = _supabaseClient.Realtime.Channel("public:rides");
+            // Kreiraj kanal za "rides" tabelu
+            _realtimeChannel = _supabaseClient.Realtime.Channel("realtime", "public", "rides");
 
-            // Dodaj handler za promjene
-            _realtimeChannel.AddPostgresChangeHandler(PostgresChangesOptions.ListenType.All, (sender, change) =>
+            // Registruj Postgres Changes
+            _realtimeChannel.Register(new PostgresChangesOptions("public", "rides"));
+
+            // Dodaj handler za sve promjene
+            _realtimeChannel.AddPostgresChangeHandler(ListenType.All, (sender, change) =>
             {
-                Console.WriteLine("Primljena nova promjena na kanalu 'rides'.");
-                if (change.Payload?.Data?.Record != null)
+                try
                 {
-                    Console.WriteLine($"Nova vožnja: {JsonSerializer.Serialize(change.Payload.Data.Record)}");
-                    MessagingCenter.Send(this, "NewRideNotification", "Nova vožnja je zakazana!");
+                    // Ekstraktuj JSON podatke
+                    var payloadJson = JsonSerializer.Serialize(change.Payload.Data.Record);
+                    var jsonDoc = JsonDocument.Parse(payloadJson);
+
+                    // Provjeri da li postoji driverid
+                    if (jsonDoc.RootElement.TryGetProperty("driverid", out var driverIdJson))
+                    {
+                        int driverId = driverIdJson.GetInt32();
+
+                        Console.WriteLine($"Primljeni driverid: {driverId}");
+                        Console.WriteLine($"Trenutni driverId: {_driverId}");
+
+                        // Ako je vožnja namijenjena trenutnom vozaču
+                        if (driverId == _driverId)
+                        {
+                            MainThread.BeginInvokeOnMainThread(async () =>
+                            {
+                                await DisplayAlert("Odabrani ste za vožnju", "Nova vožnja je zakazana za vas.", "OK");
+                            });
+                        }
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("Nema podataka u promjeni.");
+                    Console.WriteLine($"Greška pri parsiranju JSON-a: {ex.Message}");
                 }
             });
 
-            // Pokušaj pretplate
-            var result = await _realtimeChannel.Subscribe();
-            Console.WriteLine($"Pretplata na kanal 'rides' je aktivna: {result.State}");
-
-            // Provjeri ponovo status socket-a
-            if (_supabaseClient.Realtime.Socket?.IsConnected == true)
-            {
-                Console.WriteLine("Socket je sada povezan i pretplata je aktivna.");
-            }
-            else
-            {
-                Console.WriteLine("Socket nije povezan ni nakon pretplate.");
-            }
-            Console.WriteLine($"Kanal: {_realtimeChannel}");
-
-
-
-
+            // Pretplata sa error handlingom
+            await _realtimeChannel.Subscribe();
+            Console.WriteLine("Uspešno pretplaćen na rides kanal!");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Greška kod pretplate na 'rides': {ex.Message}");
+            Console.WriteLine($"Greška pri pretplati: {ex.Message}");
         }
     }
 
@@ -135,14 +238,8 @@ public partial class DriverHomePage : ContentPage
     {
         base.OnDisappearing();
         _realtimeChannel?.Unsubscribe();
-
-        // Unsubscribe from MessagingCenter
         MessagingCenter.Unsubscribe<DriverService, int>(this, "DriverSelected");
     }
-
-
-
-
 
     public async Task ShowRideNotification()
     {
@@ -157,6 +254,7 @@ public partial class DriverHomePage : ContentPage
         try
         {
             var driver = await _driverService.GetDriverByUserIdAsync(_driverId);
+         
             if (driver != null)
             {
                 _isAvailable = driver.IsAvailable;

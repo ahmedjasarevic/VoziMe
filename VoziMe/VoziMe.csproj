@@ -78,8 +78,7 @@
 		<PackageReference Include="Microsoft.Maui.Maps" Version="9.0.60" />
 		<PackageReference Include="Npgsql" Version="9.0.3" />
 		<PackageReference Include="Supabase" Version="1.1.1" />
-		<PackageReference Include="Supabase.Postgrest" Version="4.1.0" />
-		<PackageReference Include="Supabase.Realtime" Version="7.1.0" />
+		<PackageReference Include="supabase-csharp" Version="0.16.2" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
 	</ItemGroup>
 

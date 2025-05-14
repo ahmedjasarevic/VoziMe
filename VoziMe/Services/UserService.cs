@@ -24,11 +24,12 @@ namespace VoziMe.Services
         {
             try
             {
-                using var connection = new NpgsqlConnection(_connectionString);
+                await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
 
+                // Select only the needed fields
                 var command = new NpgsqlCommand(
-                    "SELECT * FROM Users WHERE Email = @Email AND UserType = @UserType",
+                    "SELECT Id, Name, Email, PasswordHash, UserType, ProfileImage FROM Users WHERE Email = @Email AND UserType = @UserType",
                     connection);
                 command.Parameters.AddWithValue("@Email", email);
                 command.Parameters.AddWithValue("@UserType", (int)userType);
@@ -38,6 +39,7 @@ namespace VoziMe.Services
                 {
                     var storedHash = reader.GetString(reader.GetOrdinal("PasswordHash"));
 
+                    // Verify password without reading unnecessary data
                     if (BCrypt.Net.BCrypt.Verify(password, storedHash))
                     {
                         _currentUser = new User
@@ -46,9 +48,7 @@ namespace VoziMe.Services
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Email = reader.GetString(reader.GetOrdinal("Email")),
                             UserType = (UserType)reader.GetInt32(reader.GetOrdinal("UserType")),
-                            ProfileImage = reader.IsDBNull(reader.GetOrdinal("ProfileImage"))
-                                ? null
-                                : reader.GetString(reader.GetOrdinal("ProfileImage"))
+                            ProfileImage = reader.IsDBNull(reader.GetOrdinal("ProfileImage")) ? null : reader.GetString(reader.GetOrdinal("ProfileImage"))
                         };
 
                         return true;
