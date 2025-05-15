@@ -3,6 +3,8 @@ using VoziMe.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using VoziMe.Views;
+
 
 namespace VoziMe.Services
 {
@@ -12,10 +14,54 @@ namespace VoziMe.Services
 
         private readonly string _connectionString;
 
-        public DriverService(NpgsqlConnection connection)
+        public DriverService(NpgsqlConnection connection)  // Pass it in the constructor
         {
             _connectionString = connection.ConnectionString;
         }
+        public async Task<List<Ride>> GetAvailableRidesAsync(int driverId)
+        {
+            var rides = new List<Ride>();
+
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            SELECT r.Id, r.CustomerId, r.SourceLatitude, r.SourceLongitude, r.SourceAddress,
+                   r.DestinationLatitude, r.DestinationLongitude, r.DestinationAddress, r.Price, r.Status
+            FROM Rides r
+            WHERE r.Status = 0 AND r.DriverId IS NULL;
+        ";
+
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    rides.Add(new Ride
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        SourceLatitude = reader.GetDouble(reader.GetOrdinal("SourceLatitude")),
+                        SourceLongitude = reader.GetDouble(reader.GetOrdinal("SourceLongitude")),
+                        SourceAddress = reader.GetString(reader.GetOrdinal("SourceAddress")),
+                        DestinationLatitude = reader.GetDouble(reader.GetOrdinal("DestinationLatitude")),
+                        DestinationLongitude = reader.GetDouble(reader.GetOrdinal("DestinationLongitude")),
+                        DestinationAddress = reader.GetString(reader.GetOrdinal("DestinationAddress")),
+                        Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                        Status = (RideStatus)reader.GetInt32(reader.GetOrdinal("Status"))
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetAvailableRidesAsync error: {ex.Message}");
+            }
+
+            return rides;
+        }
+
 
         public async Task<List<Driver>> GetNearbyDriversAsync(double latitude, double longitude, double radiusKm = 5.0)
         {
@@ -76,26 +122,45 @@ namespace VoziMe.Services
 
 
         public async Task<bool> BookRideAsync(int customerId, int driverId,
-            double sourceLatitude, double sourceLongitude, string sourceAddress,
-            double destLatitude, double destLongitude, string destAddress)
+    double sourceLatitude, double sourceLongitude, string sourceAddress,
+    double destLatitude, double destLongitude, string destAddress)
         {
             try
             {
                 using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                var distance = CalculateDistance(sourceLatitude, sourceLongitude, destLatitude, destLongitude);
-                var price = decimal.Parse(CalculatePrice(distance).Replace("KM", ""));
+                using var transaction = await connection.BeginTransactionAsync();
 
+                // Provjeri da li vozač postoji i da li je dostupan
+                var checkDriverCommand = connection.CreateCommand();
+                checkDriverCommand.CommandText = @"
+            SELECT isavailable FROM Drivers WHERE Id = @DriverId;
+        ";
+                checkDriverCommand.Parameters.AddWithValue("@DriverId", NpgsqlTypes.NpgsqlDbType.Integer, driverId);
+
+                var isAvailable = (bool?)await checkDriverCommand.ExecuteScalarAsync();
+
+                if (isAvailable == null || isAvailable == false)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                // Izračunaj distancu i cijenu
+                var distance = CalculateDistance(sourceLatitude, sourceLongitude, destLatitude, destLongitude);
+                var price = decimal.Parse(CalculatePrice(distance).Replace("KM", "").Trim());
+
+                // Kreiraj vožnju
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-                    INSERT INTO Rides (CustomerId, DriverId, SourceLatitude, SourceLongitude, SourceAddress,
-                                       DestinationLatitude, DestinationLongitude, DestinationAddress, Price, Status)
-                    VALUES (@CustomerId, @DriverId, @SourceLat, @SourceLong, @SourceAddr,
-                            @DestLat, @DestLong, @DestAddr, @Price, @Status);
+            INSERT INTO Rides (CustomerId, DriverId, SourceLatitude, SourceLongitude, SourceAddress,
+                               DestinationLatitude, DestinationLongitude, DestinationAddress, Price, Status)
+            VALUES (@CustomerId, @DriverId, @SourceLat, @SourceLong, @SourceAddr,
+                    @DestLat, @DestLong, @DestAddr, @Price, @Status);
 
-                    UPDATE Drivers SET isavailable = false WHERE Id = @DriverId;
-                ";
+            UPDATE Drivers SET isavailable = false WHERE Id = @DriverId;
+        ";
 
                 command.Parameters.AddWithValue("@CustomerId", customerId);
                 command.Parameters.AddWithValue("@DriverId", driverId);
@@ -109,6 +174,11 @@ namespace VoziMe.Services
                 command.Parameters.AddWithValue("@Status", (int)RideStatus.Requested);
 
                 await command.ExecuteNonQueryAsync();
+
+                // **POŠALJI OBAVIJEST VOZAČU**
+                MessagingCenter.Send(this, "DriverSelected", driverId);
+
+                await transaction.CommitAsync();
                 return true;
             }
             catch (Exception ex)
@@ -315,6 +385,74 @@ namespace VoziMe.Services
             }
 
             return null;
+        }
+
+       
+
+public async Task<bool> NotifyDriverWhenSelected(int driverId)
+    {
+        try
+        {
+            var driver = await GetDriverByUserIdAsync(driverId);
+            if (driver == null)
+            {
+                return false;
+            }
+
+            // Šalje poruku vozaču
+            MessagingCenter.Send(this, "DriverSelected", driverId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error notifying driver: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<Ride> GetActiveRideAsync(int driverId)
+        {
+            Ride activeRide = null;
+
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            SELECT r.Id, r.CustomerId, r.SourceLatitude, r.SourceLongitude, r.SourceAddress,
+                   r.DestinationLatitude, r.DestinationLongitude, r.DestinationAddress, r.Price, r.Status
+            FROM Rides r
+            WHERE r.DriverId = @DriverId AND r.Status = 1;  -- Status 1 = Active ride
+        ";
+                command.Parameters.AddWithValue("@DriverId", driverId);
+
+                using var reader = await command.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    activeRide = new Ride
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        SourceLatitude = reader.GetDouble(reader.GetOrdinal("SourceLatitude")),
+                        SourceLongitude = reader.GetDouble(reader.GetOrdinal("SourceLongitude")),
+                        SourceAddress = reader.GetString(reader.GetOrdinal("SourceAddress")),
+                        DestinationLatitude = reader.GetDouble(reader.GetOrdinal("DestinationLatitude")),
+                        DestinationLongitude = reader.GetDouble(reader.GetOrdinal("DestinationLongitude")),
+                        DestinationAddress = reader.GetString(reader.GetOrdinal("DestinationAddress")),
+                        Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                        Status = (RideStatus)reader.GetInt32(reader.GetOrdinal("Status"))
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetActiveRideAsync error: {ex.Message}");
+            }
+
+            return activeRide;
         }
 
 
