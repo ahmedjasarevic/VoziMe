@@ -3,7 +3,12 @@
              xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
              x:Class="VoziMe.Views.RideTrackingPage"
              Title="Praćenje vožnje"
-             BackgroundColor="White">
+             BackgroundColor="Black"
+             NavigationPage.HasNavigationBar="False"
+             xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+shell:Shell.NavBarIsVisible="False"
+             
+>
 
     <Grid RowDefinitions="*,Auto">
         <!-- Mapa -->
@@ -12,20 +17,24 @@
                   IsShowingUser="True" />
 
         <!-- Detalji vozača -->
-        <Frame Grid.Row="1"
-               BackgroundColor="White"
+        <Frame BorderColor="#fcc13b"
+            Grid.Row="1"
+               BackgroundColor="Black"
                Padding="15"
                CornerRadius="20"
                HasShadow="True"
                Margin="15">
             <StackLayout>
-                <Label x:Name="DriverNameLabel" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
-                <Label x:Name="CarInfoLabel" FontSize="14" TextColor="Gray"/>
-                <Label x:Name="EtaLabel" FontSize="14" TextColor="Green"/>
+                
+
+                    <Label x:Name="DriverNameLabel" FontSize="18" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center"/>
+                <Label x:Name="CarInfoLabel" FontSize="14" TextColor="White" VerticalTextAlignment="Center"/>
+                <Label x:Name="EtaLabel" FontSize="14" TextColor="#fcc13b" FontAttributes="Bold" VerticalTextAlignment="Center"/>
                 <Button Text="Završi vožnju"
                         Clicked="FinishRideButton_Clicked"
-                        BackgroundColor="Green"
-                        TextColor="White"
+                        BackgroundColor="#fcc13b"
+                        TextColor="Black"
+                        FontAttributes="Bold"
                         Margin="20"
                         VerticalOptions="End"/>
 
@@ -36,7 +45,7 @@
                              HorizontalOptions="Center"
                              Orientation="Horizontal"
                              Spacing="10">
-                    <Label Text="Ocijeni vožnju:" FontAttributes="Bold" FontSize="16" TextColor="Black" />
+                    <Label Text="Ocijeni vožnju:" FontAttributes="Bold" FontSize="16" TextColor="White" />
                     <StackLayout Orientation="Horizontal" x:Name="StarContainer">
                         <!-- Zvjezdice se dodaju iz code-behind -->
                     </StackLayout>

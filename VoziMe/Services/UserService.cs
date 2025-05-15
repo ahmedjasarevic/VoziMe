@@ -1,7 +1,8 @@
 ﻿using VoziMe.Models;
 using Npgsql;
 using System;
-using System.IO; // For Path.Combine
+using System.Threading.Tasks;
+using BCrypt.Net;
 
 namespace VoziMe.Services
 {
@@ -9,11 +10,10 @@ namespace VoziMe.Services
     {
         private readonly string _connectionString;
 
+        // Koristi svoj pravi connection string
         public UserService()
         {
-            // PostgreSQL connection string setup
             _connectionString = "User Id=postgres.vfqrsstbgqfwukfgslyo;Password=SanidMuhic123;Server=aws-0-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres";
-
         }
 
         private User _currentUser;
@@ -71,7 +71,6 @@ namespace VoziMe.Services
                 using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                // Check if a user with the same email exists
                 var checkCommand = new NpgsqlCommand(
                     "SELECT COUNT(*) FROM Users WHERE Email = @Email",
                     connection);
@@ -80,18 +79,16 @@ namespace VoziMe.Services
                 var count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
                 if (count > 0)
                 {
-                    // If user exists, return false
                     throw new Exception("A user with this email already exists");
                 }
 
-                // Proceed with registration if no user with this email exists
                 var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
                 var insertCommand = new NpgsqlCommand(@"
-                INSERT INTO Users (Name, Email, PasswordHash, UserType, ProfileImage)
-                VALUES (@Name, @Email, @PasswordHash, @UserType, @ProfileImage)
-                RETURNING Id;",
-                connection);
+                    INSERT INTO Users (Name, Email, PasswordHash, UserType, ProfileImage)
+                    VALUES (@Name, @Email, @PasswordHash, @UserType, @ProfileImage)
+                    RETURNING Id;",
+                    connection);
 
                 insertCommand.Parameters.AddWithValue("@Name", name);
                 insertCommand.Parameters.AddWithValue("@Email", email);
@@ -101,17 +98,16 @@ namespace VoziMe.Services
 
                 var userId = (int)await insertCommand.ExecuteScalarAsync();
 
-                // If user is a driver, add driver details
                 if (userType == UserType.Driver)
                 {
                     var driverCommand = new NpgsqlCommand(@"
-                    INSERT INTO Drivers (UserId, Car, Latitude, Longitude, Rating, IsAvailable)
-                    VALUES (@UserId, @Car, @Latitude, @Longitude, @Rating, @IsAvailable);",
-                    connection);
+                        INSERT INTO Drivers (UserId, Car, Latitude, Longitude, Rating, IsAvailable)
+                        VALUES (@UserId, @Car, @Latitude, @Longitude, @Rating, @IsAvailable);",
+                        connection);
 
                     driverCommand.Parameters.AddWithValue("@UserId", userId);
                     driverCommand.Parameters.AddWithValue("@Car", "Not specified");
-                    driverCommand.Parameters.AddWithValue("@Latitude", 44.2037); // Default location
+                    driverCommand.Parameters.AddWithValue("@Latitude", 44.2037);
                     driverCommand.Parameters.AddWithValue("@Longitude", 17.9071);
                     driverCommand.Parameters.AddWithValue("@Rating", 0);
                     driverCommand.Parameters.AddWithValue("@IsAvailable", true);
@@ -127,6 +123,7 @@ namespace VoziMe.Services
                 throw;
             }
         }
+
         public async Task<User> GetUserByEmailAsync(string email)
         {
             using var connection = new NpgsqlConnection(_connectionString);
@@ -153,9 +150,64 @@ namespace VoziMe.Services
             return null;
         }
 
+        public async Task<Driver> GetDriverByUserIdAsync(int userId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var command = new NpgsqlCommand("SELECT * FROM Drivers WHERE UserId = @UserId", connection);
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new Driver
+                {
+                    UserId = userId,
+                    Car = reader.GetString(reader.GetOrdinal("Car")),
+                    Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
+                    Longitude = reader.GetDouble(reader.GetOrdinal("Longitude")),
+                    Rating = reader.GetInt32(reader.GetOrdinal("Rating")),
+                    IsAvailable = reader.GetBoolean(reader.GetOrdinal("IsAvailable"))
+                };
+            }
+
+            return null;
+        }
+
+        public async Task UpdateDriverCarAsync(int userId, string newCar)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var command = new NpgsqlCommand("UPDATE Drivers SET Car = @Car WHERE UserId = @UserId", connection);
+            command.Parameters.AddWithValue("@Car", newCar);
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task UpdateProfileImageAsync(int userId, string imageName)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var command = new NpgsqlCommand("UPDATE Users SET ProfileImage = @Image WHERE Id = @UserId", connection);
+            command.Parameters.AddWithValue("@Image", imageName);
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            await command.ExecuteNonQueryAsync();
+        }
+
         public void Logout()
         {
             _currentUser = null;
+        }
+
+        // Ovo je dodatna metoda za povratak connection string-a (ako trebaš)
+        public string GetConnectionString()
+        {
+            return _connectionString;
         }
     }
 }

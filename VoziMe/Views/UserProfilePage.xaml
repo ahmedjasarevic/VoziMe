@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VoziMe.Views.UserProfilePage"
+             Title="UserProfilePage"
+             NavigationPage.HasNavigationBar="False"
+             xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+shell:Shell.NavBarIsVisible="False"
+>
+    <VerticalStackLayout>
+        <Label 
+            Text="Korisnik"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center" />
+    </VerticalStackLayout>
+</ContentPage>

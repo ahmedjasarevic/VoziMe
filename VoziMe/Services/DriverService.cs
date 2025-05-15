@@ -74,6 +74,7 @@ namespace VoziMe.Services
             return drivers;
         }
 
+
         public async Task<bool> BookRideAsync(int customerId, int driverId,
             double sourceLatitude, double sourceLongitude, string sourceAddress,
             double destLatitude, double destLongitude, string destAddress)
@@ -364,4 +365,3 @@ WHERE d.isavailable = true;
 
     }
 }
-

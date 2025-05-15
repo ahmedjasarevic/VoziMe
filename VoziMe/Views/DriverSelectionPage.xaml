@@ -2,7 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
              x:Class="VoziMe.Views.DriverSelectionPage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+shell:Shell.NavBarIsVisible="False"
+             BackgroundColor="Black">
 
     <Grid x:Name="MainGrid"
           RowDefinitions="Auto, *, Auto">
@@ -84,8 +87,10 @@ lokaciju"
         <Button x:Name="ShowDriversButton"
                 Grid.Row="2"
                 Text="Odaberite vozača"
-                BackgroundColor="#FF4444"
-                TextColor="White"
+                BackgroundColor="#fcc13b"
+                TextColor="black"
+                TextTransform="Uppercase"
+                FontAttributes="Bold"
                 FontSize="16"
                 CornerRadius="25"
                 Padding="10"
@@ -97,7 +102,7 @@ lokaciju"
         <!-- Bottom Sheet - Panel za vozače -->
         <Frame x:Name="BottomSheet"
                IsVisible="False"
-               BackgroundColor="#222222"
+               BackgroundColor="Black"
                CornerRadius="20"
                Padding="15"
                Grid.RowSpan="3"
@@ -119,7 +124,7 @@ lokaciju"
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <!-- Prikaz vozača -->
-                                <Frame BorderColor="#FF4444" CornerRadius="10" Padding="10">
+                                <Frame BorderColor="#fcc13b" CornerRadius="10" Padding="10">
                                     <Frame.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="DriverCard_Tapped" />
                                     </Frame.GestureRecognizers>
@@ -130,7 +135,7 @@ WidthRequest="50" CornerRadius="25" BackgroundColor="#eee">
                                             <Image Source="{Binding ProfileImage}" Aspect="AspectFill" />
                                         </Frame>
                                         <VerticalStackLayout Grid.Column="1" Margin="10,0,0,0">
-                                            <Label Text="{Binding Name}" TextColor="Black" FontAttributes="Bold" />
+                                            <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" />
                                             <Label Text="{Binding Car}" TextColor="#aaa" FontSize="12" />
                                             <Label Text="{Binding Price, StringFormat='Cijena: {0}'}" TextColor="#aaa" FontSize="12" />
                                         </VerticalStackLayout>
@@ -145,8 +150,9 @@ Grid.Column="2" Text="{Binding Rating, StringFormat='{0}★'}" TextColor="#FFD70
 
                     <Button Text="Osvježi listu"
                             Clicked="RefreshDrivers_Clicked"
-                            BackgroundColor="White"
+                            BackgroundColor="#fcc13b"
                             TextColor="Black"
+                            FontAttributes="Bold"
                             CornerRadius="10"
                             Padding="10"
                             Margin="0,10,0,0" />

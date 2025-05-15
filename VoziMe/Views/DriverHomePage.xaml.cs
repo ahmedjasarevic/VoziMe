@@ -11,52 +11,47 @@ public partial class DriverHomePage : ContentPage
     private readonly DriverService _driverService;
     private readonly LocationService _locationService;
     private bool _isAvailable = false;
-    private int _driverId; // ovo je `Drivers.Id`, ne `Users.Id`
 
-    public DriverHomePage(int driverId)
+    private readonly int _userId;
+    private int _driverId;
+    private Driver _driver;
+
+    public DriverHomePage(int userId)
     {
         InitializeComponent();
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
-        _driverId = driverId;
+        _userId = userId;
 
         InitializeMap();
+        _ = LoadDriverDataAndAvailability();
     }
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-
-        // Inicijalizuj status dostupnosti vozača
-        await LoadDriverAvailability();
-    }
-
-    private async Task LoadDriverAvailability()
+    private async Task LoadDriverDataAndAvailability()
     {
         try
         {
-            // Dohvati trenutnu dostupnost vozača iz baze
-            var driver = await _driverService.GetDriverByUserIdAsync(_driverId);
+            _driver = await _driverService.GetDriverByUserIdAsync(_userId);
 
-            if (driver != null)
+            if (_driver != null)
             {
-                _isAvailable = driver.IsAvailable;
+                _driverId = _driver.Id;
+                _isAvailable = _driver.IsAvailable;
 
-                // Ažuriraj UI prema dostupnosti vozača
                 AvailabilityToggleButton.Text = _isAvailable ? "Prekini potragu" : "Traži vožnju";
                 AvailabilityToggleButton.BackgroundColor = _isAvailable ? Colors.Red : Colors.Green;
             }
             else
             {
-                // Ako vozač nije pronađen, setuj dostupnost na false
                 _isAvailable = false;
                 AvailabilityToggleButton.Text = "Traži vožnju";
                 AvailabilityToggleButton.BackgroundColor = Colors.Green;
+                await DisplayAlert("Greška", "Nije pronađen vozač za ovog korisnika.", "OK");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Greška", $"Nije moguće učitati status vozača: {ex.Message}", "OK");
+            await DisplayAlert("Greška", $"Nije moguće učitati podatke vozača: {ex.Message}", "OK");
         }
     }
 
@@ -87,7 +82,6 @@ public partial class DriverHomePage : ContentPage
             return;
         }
 
-        // Obrni status tek sad
         _isAvailable = !_isAvailable;
 
         bool success = await _driverService.UpdateDriverAvailabilityAsync(
