@@ -48,9 +48,7 @@ public partial class DriverHomePage : ContentPage
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
         _userId = userId;
-        _driverId = driverId;
-        _driver = new Driver();
-        _driver.Id = driverId;
+        
 
 
         // Initialize the map first
@@ -68,10 +66,18 @@ public partial class DriverHomePage : ContentPage
             {
                 _driverId = _driver.Id;
                 _isAvailable = _driver.IsAvailable;
-        // Initialize Supabase client asynchronously
-        Task.Run(async () => await InitializeSupabaseClientAsync());
+                // Initialize Supabase client asynchronously
+                Task.Run(async () => await InitializeSupabaseClientAsync());
 
-    }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Greska", $"Nije moguce ucitati status vozaca: {ex.Message}", "OK");
+
+        }
+        }
+    
 
     private async Task InitializeSupabaseClientAsync()
     {
@@ -122,8 +128,10 @@ public partial class DriverHomePage : ContentPage
                                 var destinationLongitude = record.GetProperty("destinationlongitude").GetDouble();
                                 var sourceAddress = record.GetProperty("sourceaddress").GetString();
                                 var destinationAddress = record.GetProperty("destinationaddress").GetString();
-                                
-                                
+                                _driverId = driverId;
+                                _driver = new Driver();
+                                _driver.Id = driverId;
+
 
                                 Console.WriteLine($"Primljeni driverid: {driverId}");
 
@@ -271,7 +279,7 @@ public partial class DriverHomePage : ContentPage
     {
         try
         {
-            var driver = await _driverService.GetDriverByUserIdAsync(_driverId);
+            var driver = await _driverService.GetDriverByUserIdAsync(_userId);
          
             if (driver != null)
             {
