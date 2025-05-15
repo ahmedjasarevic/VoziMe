@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VoziMe.Views.DriverProfilePage"
+             Title="Profil vozača"
+             NavigationPage.HasNavigationBar="False"
+             xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+             shell:Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20">
+
+            <!-- Profilna slika -->
+            <Image x:Name="profileImage"
+                   HeightRequest="120"
+                   WidthRequest="120"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Aspect="AspectFill"
+                   BackgroundColor="LightGray"
+                   Margin="0,20" />
+            <Button Text="Promijeni sliku"
+                    x:Name="btnChangeImage"
+                    Clicked="btnChangeImage_Clicked"
+                    HorizontalOptions="Center" />
+
+            <!-- Ime -->
+            <Label Text="Ime:" FontAttributes="Bold" />
+            <Label x:Name="lblName"
+                   FontSize="16"
+                   TextColor="Black" />
+
+            <!-- Email -->
+            <Label Text="Email:" FontAttributes="Bold" />
+            <Label x:Name="lblEmail"
+                   FontSize="16"
+                   TextColor="Black" />
+
+            <!-- Auto -->
+            <Label Text="Automobil:" FontAttributes="Bold" />
+            <Entry x:Name="entryCar"
+                   Placeholder="Unesite vaš automobil"
+                   FontSize="16"
+                   BackgroundColor="#f0f0f0"
+                   HeightRequest="40" />
+            <Button Text="Spremi promjene"
+                    x:Name="btnSaveCar"
+                    Clicked="btnSaveCar_Clicked"
+                    BackgroundColor="#007aff"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="45" />
+
+            <!-- Ocjena -->
+            <Label x:Name="lblRating"
+                   FontSize="16"
+                   TextColor="DarkGoldenrod"
+                   HorizontalOptions="Center"
+                   IsVisible="True" />
+
+            <!-- Dostupnost -->
+            <StackLayout Orientation="Horizontal" Spacing="10" VerticalOptions="Center">
+                <Label Text="Dostupan:" VerticalOptions="Center" />
+                <Switch x:Name="toggleAvailability"
+                        Toggled="toggleAvailability_Toggled" />
+            </StackLayout>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage> 

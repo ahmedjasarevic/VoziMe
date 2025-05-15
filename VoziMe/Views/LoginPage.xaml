@@ -6,14 +6,20 @@
              NavigationPage.HasNavigationBar="False">
     <ScrollView>
         <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
-            <Frame >
-                
-                    <Image Source="taxi_logo.png" 
-                           HeightRequest="300" 
-                           WidthRequest="250"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"/>
-                   
+            <Frame CornerRadius="30"
+           Padding="0"
+           HasShadow="False"
+           IsClippedToBounds="True"
+           HeightRequest="250"
+           WidthRequest="250"
+           HorizontalOptions="Center"
+           VerticalOptions="Center">
+
+                <Image Source="taxi_logo.png"
+               Aspect="AspectFill"
+               HorizontalOptions="FillAndExpand"
+               VerticalOptions="FillAndExpand" />
+
             </Frame>
 
             <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,*">
@@ -22,7 +28,8 @@
                        x:Name="UsernameEntry"
                        Placeholder="Ime i prezime"
                        Style="{StaticResource EntryStyle}"
-                       Margin="10,0,0,0" />
+                       Margin="10,0,0,0" 
+                       WidthRequest="300"/>
             </Grid>
             <BoxView HeightRequest="1" Color="#444444" />
 
@@ -33,26 +40,12 @@
                        Placeholder="********"
                        IsPassword="True"
                        Style="{StaticResource EntryStyle}"
-                       Margin="10,0,0,0" />
+                       Margin="10,0,0,0" 
+                       WidthRequest="300"/>
             </Grid>
             <BoxView HeightRequest="1" Color="#444444" />
 
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20" Margin="0,20,0,0">
-                <ImageButton Source="google_icon.png" 
-                             HeightRequest="40" 
-                             WidthRequest="40"
-                             BackgroundColor="White"
-                             CornerRadius="20"
-                             Clicked="OnGoogleLoginClicked" />
-
-                <ImageButton Source="facebook_icon.png" 
-                             HeightRequest="40" 
-                             WidthRequest="40"
-                             BackgroundColor="#1877F2"
-                             CornerRadius="20"
-                             Clicked="OnFacebookLoginClicked" />
-            </HorizontalStackLayout>
-
+            
             <Button Text="Prijavi se"
                     Style="{StaticResource PrimaryButton}"
                     Margin="0,20,0,0"
@@ -61,7 +54,8 @@
             <Label Text="Registruj se"
                    TextColor="{StaticResource TextColor}"
                    HorizontalOptions="Center"
-                   Margin="0,10,0,0">
+                   Margin="0,10,0,0"
+                   >
                 <Label.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnRegisterLabelTapped" />
                 </Label.GestureRecognizers>

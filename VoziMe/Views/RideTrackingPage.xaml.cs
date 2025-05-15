@@ -137,7 +137,7 @@ public partial class RideTrackingPage : ContentPage
         {
             var star = new Image
             {
-                Source = "star_empty.png",
+                Source = "star_empty1.png",
                 HeightRequest = 30,
                 WidthRequest = 30,
                 Margin = new Thickness(5)
@@ -163,7 +163,7 @@ public partial class RideTrackingPage : ContentPage
         {
             if (StarContainer.Children[i] is Image starImage)
             {
-                starImage.Source = i < rating ? "star_filled.png" : "star_empty.png";
+                starImage.Source = i < rating ? "star_filled.png" : "star_empty1.png";
             }
         }
     }

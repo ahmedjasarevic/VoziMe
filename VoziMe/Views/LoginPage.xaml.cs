@@ -33,19 +33,25 @@ public partial class LoginPage : ContentPage
 
             if (isAuthenticated)
             {
-                if (_userType == UserType.Customer)
+                var user = await _userService.GetUserByEmailAsync(UsernameEntry.Text);
+
+                var driver = await _driverService.GetDriverByUserIdAsync(user.Id);
+
+                if (driver != null)
                 {
-                    await Navigation.PushAsync(new DriverSelectionPage());
+                    user.UserType = UserType.Driver;
                 }
                 else
                 {
-                    var user = await _userService.GetUserByEmailAsync(UsernameEntry.Text);
-                    var driver = await _driverService.GetDriverByUserIdAsync(user.Id);
-                    int driverId = driver.Id;
-                    // For driver, you would navigate to a driver dashboard
-                    await Navigation.PushAsync(new DriverHomePage(driverId));
+                    user.UserType = UserType.Customer;
                 }
+                
+
+
+                Application.Current.MainPage = new AppShell(user);
+
             }
+
             else
             {
                 await DisplayAlert("Greška", "Pogrešno korisnièko ime ili lozinka", "OK");
@@ -56,6 +62,7 @@ public partial class LoginPage : ContentPage
             await DisplayAlert("Greška", $"Došlo je do greške: {ex.Message}", "OK");
         }
     }
+
 
     private async void OnGoogleLoginClicked(object sender, EventArgs e)
     {

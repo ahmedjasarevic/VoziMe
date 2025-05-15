@@ -26,6 +26,7 @@ public partial class DriverHomePage : ContentPage
     private readonly DriverService _driverService;
     private readonly LocationService _locationService;
     private bool _isAvailable = false;
+
     private int _driverId;
     private Pin _driverPin;
     private Polyline _routeLine;
@@ -34,22 +35,39 @@ public partial class DriverHomePage : ContentPage
     private Location _pickupLocation;
     private Driver _driver;
     private bool _rideHandled = false;
+    private readonly int _userId;
 
 
 
+  
+  
 
-    public DriverHomePage(int driverId)
+    public DriverHomePage(int userId)
     {
         InitializeComponent();
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
+        _userId = userId;
         _driverId = driverId;
         _driver = new Driver();
         _driver.Id = driverId;
 
+
         // Initialize the map first
         InitializeMap();
+        _ = LoadDriverDataAndAvailability();
+    }
 
+    private async Task LoadDriverDataAndAvailability()
+    {
+        try
+        {
+            _driver = await _driverService.GetDriverByUserIdAsync(_userId);
+
+            if (_driver != null)
+            {
+                _driverId = _driver.Id;
+                _isAvailable = _driver.IsAvailable;
         // Initialize Supabase client asynchronously
         Task.Run(async () => await InitializeSupabaseClientAsync());
 
@@ -266,11 +284,12 @@ public partial class DriverHomePage : ContentPage
                 _isAvailable = false;
                 AvailabilityToggleButton.Text = "Traži vožnju";
                 AvailabilityToggleButton.BackgroundColor = Colors.Green;
+                await DisplayAlert("Greška", "Nije pronađen vozač za ovog korisnika.", "OK");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Greška", $"Nije moguće učitati status vozača: {ex.Message}", "OK");
+            await DisplayAlert("Greška", $"Nije moguće učitati podatke vozača: {ex.Message}", "OK");
         }
     }
 

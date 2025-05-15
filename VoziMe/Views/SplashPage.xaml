@@ -5,16 +5,21 @@
              BackgroundColor="{StaticResource BackgroundColor}"
              NavigationPage.HasNavigationBar="False">
     <Grid>
-        <Frame >
+        <Frame CornerRadius="30"
+           Padding="0"
+           HasShadow="False"
+           IsClippedToBounds="True"
+           HeightRequest="250"
+           WidthRequest="250"
+           HorizontalOptions="Center"
+           VerticalOptions="Center">
 
-            <Image Source="taxi_logo.png" 
-                       HeightRequest="250" 
-                       WidthRequest="250"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                   />
-              
-            
+            <Image Source="taxi_logo.png"
+               Aspect="AspectFill"
+               HorizontalOptions="FillAndExpand"
+               VerticalOptions="FillAndExpand" />
+
         </Frame>
     </Grid>
+
 </ContentPage>

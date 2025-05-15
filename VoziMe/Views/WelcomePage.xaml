@@ -5,16 +5,20 @@
              BackgroundColor="{StaticResource BackgroundColor}"
              NavigationPage.HasNavigationBar="False">
     <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
-        <Frame CornerRadius="25" >
+        <Frame CornerRadius="30"
+           Padding="0"
+           HasShadow="False"
+           IsClippedToBounds="True"
+           HeightRequest="250"
+           WidthRequest="250"
+           HorizontalOptions="Center"
+           VerticalOptions="Center">
 
-            <Image Source="taxi_logo.png" 
-                   
-                       HeightRequest="250" 
-                       WidthRequest="250"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"/>
-                
-           
+            <Image Source="taxi_logo.png"
+               Aspect="AspectFill"
+               HorizontalOptions="FillAndExpand"
+               VerticalOptions="FillAndExpand" />
+
         </Frame>
 
         <VerticalStackLayout Spacing="5" Margin="0,20,0,30">
