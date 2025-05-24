@@ -148,7 +148,12 @@ public partial class DriverHomePage : ContentPage
                                     MainThread.BeginInvokeOnMainThread(async () =>
                                     {
                                         await DisplayAlert("Odabrani ste za vožnju", $"Nova vožnja je zakazana od {sourceAddress} do {destinationAddress}.", "OK");
-                                        await Navigation.PushAsync(new RideTrackingPage(_driver, _pickupLocation, customerId));
+                                        await Navigation.PushAsync(new DriverTrackingPage(
+    new Location(_driver.Latitude, _driver.Longitude),
+    _pickupLocation,
+    destinationLocation,
+    "Korisnik"
+));
                                     });
                                 }
                             }
