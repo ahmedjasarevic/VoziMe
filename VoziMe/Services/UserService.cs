@@ -18,6 +18,7 @@ namespace VoziMe.Services
 
         private User _currentUser;
 
+
         public User CurrentUser => _currentUser;
 
         public async Task<bool> LoginAsync(string email, string password, UserType userType)
@@ -230,6 +231,11 @@ namespace VoziMe.Services
 
             await command.ExecuteNonQueryAsync();
         }
+        public void SetCurrentUser(User user)
+        {
+            _currentUser = user;
+        }
+
 
         public void Logout()
         {

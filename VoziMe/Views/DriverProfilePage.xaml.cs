@@ -3,6 +3,7 @@ using VoziMe.Services;
 using Microsoft.Maui.Controls;
 using System;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace VoziMe.Views
 {
@@ -14,15 +15,18 @@ namespace VoziMe.Views
         public DriverProfilePage()
         {
             InitializeComponent();
-            _userService = new UserService();
+            _userService = Application.Current.Handler.MauiContext.Services.GetService<UserService>();
             LoadDriverProfile();
         }
+
 
         private async void LoadDriverProfile()
         {
             try
             {
                 var currentUser = _userService.CurrentUser;
+                Console.WriteLine($"CURRENT USER: {currentUser?.Name}, {currentUser?.Email}, {currentUser?.Id}");
+
 
                 if (currentUser != null)
                 {
@@ -35,7 +39,6 @@ namespace VoziMe.Views
                     {
                         entryCar.Text = _driver.Car;
                         lblRating.Text = $"Ocjena: {_driver.Rating}/5";
-                        toggleAvailability.IsToggled = _driver.IsAvailable;
                     }
                 }
                 else
@@ -66,22 +69,6 @@ namespace VoziMe.Views
 
             await _userService.UpdateDriverCarAsync(_driver.UserId, newCar);
             await DisplayAlert("Uspjeh", "Podaci o vozilu su ažurirani.", "U redu");
-        }
-
-        private async void toggleAvailability_Toggled(object sender, ToggledEventArgs e)
-        {
-            if (_driver == null) return;
-
-            using var connection = new Npgsql.NpgsqlConnection(_userService.GetConnectionString());
-            await connection.OpenAsync();
-
-            var command = new Npgsql.NpgsqlCommand("UPDATE Drivers SET IsAvailable = @Available WHERE UserId = @UserId", connection);
-            command.Parameters.AddWithValue("@Available", e.Value);
-            command.Parameters.AddWithValue("@UserId", _driver.UserId);
-
-            await command.ExecuteNonQueryAsync();
-
-            await DisplayAlert("Status", e.Value ? "Dostupan" : "Nedostupan", "U redu");
         }
 
         private async void btnChangeImage_Clicked(object sender, EventArgs e)

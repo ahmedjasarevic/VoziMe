@@ -2,15 +2,52 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="VoziMe.Views.UserProfilePage"
-             Title="UserProfilePage"
+             Title="Profil korisnika"
              NavigationPage.HasNavigationBar="False"
+             BackgroundColor="Black"
              xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
-shell:Shell.NavBarIsVisible="False"
->
-    <VerticalStackLayout>
-        <Label 
-            Text="Korisnik"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             shell:Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20">
+
+            <!-- Profilna slika -->
+            <Image x:Name="profileImage"
+                   HeightRequest="120"
+                   WidthRequest="120"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Aspect="AspectFill"
+                   BackgroundColor="#333333"
+                   Margin="0,20" />
+
+            <Button Text="Promijeni sliku"
+                    x:Name="btnChangeImage"
+                    Clicked="btnChangeImage_Clicked"
+                    HorizontalOptions="Center"
+                    BackgroundColor="#FFD700"  
+                TextColor="Black"
+                    CornerRadius="8"
+                    HeightRequest="45" />
+
+                <Label Text="Ime:" 
+                   FontAttributes="Bold" 
+                   TextColor="#FFD700"
+                    FontSize="18"/>
+                    <Label x:Name="lblName"
+                   FontSize="16"
+                   TextColor="White" />
+
+                    <Label Text="Email:" 
+                   FontAttributes="Bold"
+                   TextColor="#FFD700"  
+                        FontSize="18" />
+                        <Label x:Name="lblEmail"
+                   FontSize="16"
+                   TextColor="White" />
+
+                        <!-- Možeš dodati još polja ako želiš -->
+
+        </StackLayout>
+    </ScrollView>
 </ContentPage>

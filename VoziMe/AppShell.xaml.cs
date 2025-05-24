@@ -33,9 +33,10 @@ namespace VoziMe
                     Icon = "profile.png",
                     ContentTemplate = new DataTemplate(() =>
                     {
-                        return new DriverProfilePage(); // Ako i ova stranica koristi ID, dodaj ga isto ovako
+                        return new DriverProfilePage(); // ne treba ništa slati
                     })
                 };
+
             }
             else // Putnik
             {
