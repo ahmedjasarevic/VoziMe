@@ -4,6 +4,7 @@
              x:Class="VoziMe.Views.DriverProfilePage"
              Title="Profil vozača"
              NavigationPage.HasNavigationBar="False"
+             BackgroundColor="Black"
              xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
              shell:Shell.NavBarIsVisible="False">
 
@@ -17,54 +18,62 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center"
                    Aspect="AspectFill"
-                   BackgroundColor="LightGray"
+                   BackgroundColor="#333333"
                    Margin="0,20" />
             <Button Text="Promijeni sliku"
                     x:Name="btnChangeImage"
                     Clicked="btnChangeImage_Clicked"
-                    HorizontalOptions="Center" />
+                    HorizontalOptions="Center"
+                    BackgroundColor="#FFD700"
+                    TextColor="Black"
+                    CornerRadius="8"
+                    HeightRequest="45" />
 
             <!-- Ime -->
-            <Label Text="Ime:" FontAttributes="Bold" />
+            <Label Text="Ime:" 
+                   FontAttributes="Bold" 
+                   TextColor="#FFD700"
+                   FontSize="18" />
             <Label x:Name="lblName"
                    FontSize="16"
-                   TextColor="Black" />
+                   TextColor="White" />
 
             <!-- Email -->
-            <Label Text="Email:" FontAttributes="Bold" />
+            <Label Text="Email:" 
+                   FontAttributes="Bold"
+                   TextColor="#FFD700"
+                   FontSize="18" />
             <Label x:Name="lblEmail"
                    FontSize="16"
-                   TextColor="Black" />
+                   TextColor="White" />
 
             <!-- Auto -->
-            <Label Text="Automobil:" FontAttributes="Bold" />
+            <Label Text="Automobil:" 
+                   FontAttributes="Bold" 
+                   TextColor="#FFD700"
+                   FontSize="18" />
             <Entry x:Name="entryCar"
                    Placeholder="Unesite vaš automobil"
                    FontSize="16"
-                   BackgroundColor="#f0f0f0"
+                   BackgroundColor="#222222"
+                   TextColor="White"
                    HeightRequest="40" />
+
             <Button Text="Spremi promjene"
                     x:Name="btnSaveCar"
                     Clicked="btnSaveCar_Clicked"
-                    BackgroundColor="#007aff"
-                    TextColor="White"
+                    BackgroundColor="#FFD700"
+                    TextColor="Black"
                     CornerRadius="8"
                     HeightRequest="45" />
 
             <!-- Ocjena -->
             <Label x:Name="lblRating"
                    FontSize="16"
-                   TextColor="DarkGoldenrod"
+                   TextColor="#FFD700"
                    HorizontalOptions="Center"
                    IsVisible="True" />
 
-            <!-- Dostupnost -->
-            <StackLayout Orientation="Horizontal" Spacing="10" VerticalOptions="Center">
-                <Label Text="Dostupan:" VerticalOptions="Center" />
-                <Switch x:Name="toggleAvailability"
-                        Toggled="toggleAvailability_Toggled" />
-            </StackLayout>
-
         </StackLayout>
     </ScrollView>
-</ContentPage> 
+</ContentPage>

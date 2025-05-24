@@ -9,13 +9,14 @@ public partial class LoginPage : ContentPage
 {
     private readonly DriverService _driverService;
     private readonly UserType _userType;
-    private readonly UserService _userService;
+    private static UserService _userService;
 
     public LoginPage(UserType userType)
     {
         InitializeComponent();
         _userType = userType;
         _userService = Application.Current.Handler.MauiContext.Services.GetService<UserService>();
+
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
     }
 
@@ -45,8 +46,10 @@ public partial class LoginPage : ContentPage
                 {
                     user.UserType = UserType.Customer;
                 }
-                
 
+
+
+                _userService.SetCurrentUser(user);
 
                 Application.Current.MainPage = new AppShell(user);
 
