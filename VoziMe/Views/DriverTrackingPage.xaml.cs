@@ -156,4 +156,17 @@ private List<Location> DecodePolyline(string encodedPoints)
 
         return poly;
     }
+    private async void OnFinishRideClicked(object sender, EventArgs e)
+    {
+        bool confirm = await DisplayAlert("Završi vožnju", "Jeste li sigurni da želite završiti vožnju?", "Da", "Ne");
+        if (confirm)
+        {
+            // Pozovi neki servis da označi vožnju kao završenu, snimi podatke, itd.
+            await DisplayAlert("Vožnja završena", "Vožnja je uspješno završena.", "OK");
+
+            // Navigacija natrag ili na neku 'Ride Summary' stranicu
+            await Navigation.PopToRootAsync();
+        }
+    }
+
 }

@@ -33,7 +33,15 @@
                        TextColor="#fcc13b"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center"/>
+                <Button Text="Završi vožnju"
+ BackgroundColor="#fcc13b"
+ TextColor="Black"
+ FontAttributes="Bold"
+ Clicked="OnFinishRideClicked"
+ Margin="0,10,0,0"/>
             </StackLayout>
         </Frame>
+       
+
     </Grid>
 </ContentPage>

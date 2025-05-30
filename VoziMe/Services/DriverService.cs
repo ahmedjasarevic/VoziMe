@@ -387,30 +387,30 @@ namespace VoziMe.Services
             return null;
         }
 
-       
 
-public async Task<bool> NotifyDriverWhenSelected(int driverId)
-    {
-        try
+
+        public async Task<bool> NotifyDriverWhenSelected(int driverId)
         {
-            var driver = await GetDriverByUserIdAsync(driverId);
-            if (driver == null)
+            try
             {
+                var driver = await GetDriverByUserIdAsync(driverId);
+                if (driver == null)
+                {
+                    return false;
+                }
+
+                // Šalje poruku vozaču
+                MessagingCenter.Send(this, "DriverSelected", driverId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error notifying driver: {ex.Message}");
                 return false;
             }
-
-            // Šalje poruku vozaču
-            MessagingCenter.Send(this, "DriverSelected", driverId);
-            return true;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error notifying driver: {ex.Message}");
-            return false;
-        }
-    }
 
-    public async Task<Ride> GetActiveRideAsync(int driverId)
+        public async Task<Ride> GetActiveRideAsync(int driverId)
         {
             Ride activeRide = null;
 

@@ -29,6 +29,12 @@ shell:Shell.NavBarIsVisible="False"
 
                     <Label x:Name="DriverNameLabel" FontSize="18" FontAttributes="Bold" TextColor="White" VerticalTextAlignment="Center"/>
                 <Label x:Name="CarInfoLabel" FontSize="14" TextColor="White" VerticalTextAlignment="Center"/>
+                <Label x:Name="PriceLabel"
+       Text="Ukupna cijena: Računa se..."
+       FontSize="14"
+       TextColor="White"
+       VerticalTextAlignment="Center" />
+
                 <Label x:Name="EtaLabel" FontSize="14" TextColor="#fcc13b" FontAttributes="Bold" VerticalTextAlignment="Center"/>
                 <Button Text="Završi vožnju"
                         Clicked="FinishRideButton_Clicked"

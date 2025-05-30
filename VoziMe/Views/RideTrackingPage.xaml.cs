@@ -16,6 +16,9 @@ public partial class RideTrackingPage : ContentPage
     private readonly Location _destinationLocation;  // Dodana destinacija
     private readonly LocationService _locationService;
     private readonly DriverService _driverService;
+    private double _rideDistanceKm;
+    private double _ridePrice;
+
 
     private Pin _driverPin;
     private bool _isDriverArrived;
@@ -98,6 +101,12 @@ public partial class RideTrackingPage : ContentPage
         foreach (var point in route2)
             polyline2.Geopath.Add(point);
         TrackingMap.MapElements.Add(polyline2);
+        var distanceKm = Location.CalculateDistance(_pickupLocation, _destinationLocation, DistanceUnits.Kilometers);
+        _rideDistanceKm = distanceKm;
+        _ridePrice = Math.Round(_rideDistanceKm * 2.0, 2); // 2KM po kilometru, zaokruženo na 2 decimale
+
+        PriceLabel.Text = $"Cijena: {_ridePrice} KM";
+
 
         var fullRoute = route1.Concat(route2).ToList();
         var centerAll = new Location(
@@ -177,6 +186,7 @@ public partial class RideTrackingPage : ContentPage
     private async void FinishRideButton_Clicked(object sender, EventArgs e)
     {
         bool success = await _driverService.FinishRideAsync(_driver.Id);
+
         if (success)
         {
             await DisplayAlert("Vožnja završena", "Vozač je sada ponovo dostupan. Ocijenite vožnju!", "OK");
