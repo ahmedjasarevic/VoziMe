@@ -1,4 +1,4 @@
-using VoziMe.Models;
+Ôªøusing VoziMe.Models;
 using VoziMe.Services;
 using Microsoft.Maui.Controls;
 using System;
@@ -43,12 +43,12 @@ namespace VoziMe.Views
                 }
                 else
                 {
-                    await DisplayAlert("Greöka", "Niste prijavljeni.", "U redu");
+                    await DisplayAlert("Gre≈°ka", "Niste prijavljeni.", "U redu");
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Greöka", $"Neuspjelo uËitavanje profila: {ex.Message}", "U redu");
+                await DisplayAlert("Gre≈°ka", $"Neuspjelo u√®itavanje profila: {ex.Message}", "U redu");
             }
         }
 
@@ -56,19 +56,19 @@ namespace VoziMe.Views
         {
             if (_driver == null)
             {
-                await DisplayAlert("Greöka", "VozaË nije pronaen.", "U redu");
+                await DisplayAlert("Gre≈°ka", "Voza√® nije prona√∞en.", "U redu");
                 return;
             }
 
             string newCar = entryCar.Text?.Trim();
             if (string.IsNullOrEmpty(newCar))
             {
-                await DisplayAlert("Greöka", "Unesite naziv automobila.", "U redu");
+                await DisplayAlert("Gre≈°ka", "Unesite naziv automobila.", "U redu");
                 return;
             }
 
             await _userService.UpdateDriverCarAsync(_driver.UserId, newCar);
-            await DisplayAlert("Uspjeh", "Podaci o vozilu su aûurirani.", "U redu");
+            await DisplayAlert("Uspjeh", "Podaci o vozilu su a≈æurirani.", "U redu");
         }
 
         private async void btnChangeImage_Clicked(object sender, EventArgs e)
@@ -83,18 +83,18 @@ namespace VoziMe.Views
 
                 if (result != null)
                 {
-                    // Samo ime fajla (moûeö prilagoditi spremanje slike na server ili u lokalni folder)
+                    // Samo ime fajla (mo≈æe≈° prilagoditi spremanje slike na server ili u lokalni folder)
                     string fileName = result.FileName;
 
                     profileImage.Source = ImageSource.FromFile(result.FullPath);
 
                     await _userService.UpdateProfileImageAsync(_userService.CurrentUser.Id, fileName);
-                    await DisplayAlert("Uspjeh", "Profilna slika je aûurirana.", "U redu");
+                    await DisplayAlert("Uspjeh", "Profilna slika je a≈æurirana.", "U redu");
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Greöka", $"Neuspjelo mijenjanje slike: {ex.Message}", "U redu");
+                await DisplayAlert("Gre≈°ka", $"Neuspjelo mijenjanje slike: {ex.Message}", "U redu");
             }
         }
     }

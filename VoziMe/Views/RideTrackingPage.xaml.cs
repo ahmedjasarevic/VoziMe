@@ -3,6 +3,7 @@ using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
 using System.Text.Json;
+using System.Globalization;
 
 
 
@@ -24,13 +25,14 @@ public partial class RideTrackingPage : ContentPage
 
     private string _googleApiKey = "AIzaSyCBd-dkJ39xZnNFXLUIfRpwdVkFtfURhEY"; // Unesi tvoj API ključ ovde
 
-    public RideTrackingPage(Driver driver, Location pickupLocation, int currentUserId)
+    public RideTrackingPage(Driver driver, Location pickupLocation, Location destinationLocation, int currentUserId)
     {
         InitializeComponent();
 
         _driver = driver;
         _pickupLocation = pickupLocation;
-        _currentUserId = currentUserId; // Postavi korisnički ID
+        _destinationLocation = destinationLocation;
+        _currentUserId = currentUserId;
 
         _locationService = Application.Current.Handler.MauiContext.Services.GetService<LocationService>();
         _driverService = Application.Current.Handler.MauiContext.Services.GetService<DriverService>();
@@ -49,6 +51,9 @@ public partial class RideTrackingPage : ContentPage
         var center = new Location(_pickupLocation.Latitude, _pickupLocation.Longitude);
         TrackingMap.MoveToRegion(MapSpan.FromCenterAndRadius(center, Distance.FromKilometers(2)));
 
+        TrackingMap.Pins.Clear();
+        TrackingMap.MapElements.Clear();
+
         var userPin = new Pin
         {
             Label = "Vaša lokacija",
@@ -56,6 +61,14 @@ public partial class RideTrackingPage : ContentPage
             Type = PinType.Place
         };
         TrackingMap.Pins.Add(userPin);
+
+        var destPin = new Pin
+        {
+            Label = "Odredište",
+            Location = _destinationLocation,
+            Type = PinType.Place
+        };
+        TrackingMap.Pins.Add(destPin);
 
         var driverLoc = new Location(_driver.Latitude, _driver.Longitude);
         _driverPin = new Pin
@@ -66,10 +79,59 @@ public partial class RideTrackingPage : ContentPage
         };
         TrackingMap.Pins.Add(_driverPin);
 
-        // Prikazivanje rute do destinacije
-        await DrawRouteAsync(_pickupLocation, _destinationLocation);
+        var route1 = await GetRoutePointsAsync(driverLoc, _pickupLocation);
+        var polyline1 = new Polyline
+        {
+            StrokeColor = Colors.DarkGreen,
+            StrokeWidth = 10
+        };
+        foreach (var point in route1)
+            polyline1.Geopath.Add(point);
+        TrackingMap.MapElements.Add(polyline1);
+
+        var route2 = await GetRoutePointsAsync(_pickupLocation, _destinationLocation);
+        var polyline2 = new Polyline
+        {
+            StrokeColor = Colors.Red,
+            StrokeWidth = 5
+        };
+        foreach (var point in route2)
+            polyline2.Geopath.Add(point);
+        TrackingMap.MapElements.Add(polyline2);
+
+        var fullRoute = route1.Concat(route2).ToList();
+        var centerAll = new Location(
+            (fullRoute.Min(p => p.Latitude) + fullRoute.Max(p => p.Latitude)) / 2,
+            (fullRoute.Min(p => p.Longitude) + fullRoute.Max(p => p.Longitude)) / 2
+        );
+        var radius = Location.CalculateDistance(
+            new Location(fullRoute.Min(p => p.Latitude), fullRoute.Min(p => p.Longitude)),
+            new Location(fullRoute.Max(p => p.Latitude), fullRoute.Max(p => p.Longitude)),
+            DistanceUnits.Kilometers
+        ) / 2;
+
+        TrackingMap.MoveToRegion(MapSpan.FromCenterAndRadius(centerAll, Distance.FromKilometers(radius + 0.5)));
+
+        EtaLabel.Text = "Ruta spremna!";
 
         StartDriverLocationUpdates();
+    }
+
+    private async Task<List<Location>> GetRoutePointsAsync(Location origin, Location destination)
+    {
+        var httpClient = new HttpClient();
+        var originStr = $"{origin.Latitude.ToString(CultureInfo.InvariantCulture)},{origin.Longitude.ToString(CultureInfo.InvariantCulture)}";
+        var destinationStr = $"{destination.Latitude.ToString(CultureInfo.InvariantCulture)},{destination.Longitude.ToString(CultureInfo.InvariantCulture)}";
+
+        var url = $"https://maps.googleapis.com/maps/api/directions/json?origin={originStr}&destination={destinationStr}&mode=driving&key={_googleApiKey}";
+        var response = await httpClient.GetStringAsync(url);
+
+        var directions = JsonSerializer.Deserialize<DirectionsResponse>(response);
+
+        if (directions?.Routes?.Count > 0)
+            return DecodePolyline(directions.Routes.First().OverviewPolyline.Points);
+
+        return new List<Location>();
     }
 
     private void StartDriverLocationUpdates()
@@ -80,7 +142,6 @@ public partial class RideTrackingPage : ContentPage
             return true;
         });
     }
-
     private async Task UpdateDriverLocationAsync()
     {
         if (_isDriverArrived) return;
@@ -252,22 +313,11 @@ public partial class RideTrackingPage : ContentPage
         while (index < encodedPoints.Length)
         {
             int b, shift = 0, result = 0;
-            do
-            {
-                b = encodedPoints[index++] - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
+            do { b = encodedPoints[index++] - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
             lat += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
 
-            shift = 0;
-            result = 0;
-            do
-            {
-                b = encodedPoints[index++] - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
+            shift = 0; result = 0;
+            do { b = encodedPoints[index++] - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
             lng += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
 
             poly.Add(new Location(lat / 1E5, lng / 1E5));
@@ -275,5 +325,4 @@ public partial class RideTrackingPage : ContentPage
 
         return poly;
     }
-
 }

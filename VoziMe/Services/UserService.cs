@@ -220,6 +220,7 @@ namespace VoziMe.Services
             await command.ExecuteNonQueryAsync();
         }
 
+
         public async Task UpdateProfileImageAsync(int userId, string imageName)
         {
             using var connection = new NpgsqlConnection(_connectionString);

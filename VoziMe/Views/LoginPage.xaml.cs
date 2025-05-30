@@ -67,17 +67,7 @@ public partial class LoginPage : ContentPage
     }
 
 
-    private async void OnGoogleLoginClicked(object sender, EventArgs e)
-    {
-        // Implement Google login
-        await DisplayAlert("Info", "Google prijava nije implementirana u ovoj verziji", "OK");
-    }
-
-    private async void OnFacebookLoginClicked(object sender, EventArgs e)
-    {
-        // Implement Facebook login
-        await DisplayAlert("Info", "Facebook prijava nije implementirana u ovoj verziji", "OK");
-    }
+  
 
     private async void OnRegisterLabelTapped(object sender, EventArgs e)
     {
