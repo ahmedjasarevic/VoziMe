@@ -129,11 +129,18 @@ lokaciju"
                                         <TapGestureRecognizer Tapped="DriverCard_Tapped" />
                                     </Frame.GestureRecognizers>
                                     <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <Frame Grid.Column="0" HeightRequest="50" 
-
-WidthRequest="50" CornerRadius="25" BackgroundColor="#eee">
-                                            <Image Source="{Binding ProfileImage}" Aspect="AspectFill" />
+                                        <Frame Grid.Column="0" HeightRequest="50" WidthRequest="50"
+       CornerRadius="25" BackgroundColor="#eee" Padding="0" IsClippedToBounds="True">
+                                            <Image Source="{Binding ProfileImage}"
+           Aspect="AspectFill"
+           WidthRequest="50"
+           HeightRequest="50">
+                                                <Image.Clip>
+                                                    <EllipseGeometry Center="25,25" RadiusX="25" RadiusY="25" />
+                                                </Image.Clip>
+                                            </Image>
                                         </Frame>
+
                                         <VerticalStackLayout Grid.Column="1" Margin="10,0,0,0">
                                             <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" />
                                             <Label Text="{Binding Car}" TextColor="#aaa" FontSize="12" />

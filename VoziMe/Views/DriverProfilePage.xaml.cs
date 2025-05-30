@@ -97,5 +97,30 @@ namespace VoziMe.Views
                 await DisplayAlert("Greška", $"Neuspjelo mijenjanje slike: {ex.Message}", "U redu");
             }
         }
+
+        private async void btnLogout_Clicked(object sender, EventArgs e)
+        {
+            var confirm = await DisplayAlert("Odjava", "Da li ste sigurni da se želite odjaviti?", "Da", "Ne");
+            if (!confirm)
+                return;
+
+            try
+            {
+                // Očisti podatke o korisniku
+                await _userService.LogoutAsync();
+
+                // Vrati korisnika na login stranicu
+
+                Application.Current.MainPage = new NavigationPage(new WelcomePage());
+
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Greška", $"Neuspjela odjava: {ex.Message}", "U redu");
+            }
+        }
+
+
     }
+
 }
