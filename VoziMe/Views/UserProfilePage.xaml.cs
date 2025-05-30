@@ -52,14 +52,15 @@ namespace VoziMe.Views
 
                 if (result != null)
                 {
-                    string fileName = result.FileName;
-                    profileImage.Source = ImageSource.FromFile(result.FullPath);
+                    using var stream = await result.OpenReadAsync();
+                    profileImage.Source = ImageSource.FromStream(() => stream);
 
                     // Pretpostavka: UserService ima metodu za update slike korisnika
-                    await _userService.UpdateProfileImageAsync(_userService.CurrentUser.Id, fileName);
+                    await _userService.UpdateProfileImageAsync(_userService.CurrentUser.Id, result.FileName);
 
                     await DisplayAlert("Uspjeh", "Profilna slika je ažurirana.", "U redu");
                 }
+
             }
             catch (Exception ex)
             {

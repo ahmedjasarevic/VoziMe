@@ -3,6 +3,8 @@ using Microsoft.Maui.Maps;
 using VoziMe.Models;
 using VoziMe.Services;
 using System.Text.Json;
+using System.Globalization;
+
 
 namespace VoziMe.Views;
 
@@ -19,105 +21,80 @@ public partial class DriverTrackingPage : ContentPage
         InitializeComponent();
 
         _driverStart = driverStart;
+
         _pickupLocation = pickupLocation;
         _destination = destination;
+        Console.WriteLine($"Vozač: {_driverStart.Latitude}, {_driverStart.Longitude}");
+        Console.WriteLine($"Korisnik: {_pickupLocation.Latitude}, {_pickupLocation.Longitude}");
+
 
         CustomerInfoLabel.Text = $"Putnik: {customerName}";
         DestinationLabel.Text = "Vozite ga do odredišta";
         EtaLabel.Text = "Ruta se učitava...";
 
         InitializeRoute();
-        try
-        {
-            var fullRoutePoints = new List<Location>();
-
-
-            // Dodaj Pins za korisnika i destinaciju
-            var userPin = new Pin
-            {
-                Label = "Korisnik",
-                Location = _pickupLocation,
-                Type = PinType.Place
-            };
-            DriverMap.Pins.Add(userPin);
-
-            var destinationPin = new Pin
-            {
-                Label = "Destinacija",
-                Location = _destination,
-                Type = PinType.Place
-            };
-            DriverMap.Pins.Add(destinationPin);
-
-            // Prikazivanje rute
-            _routeLine = new Polyline
-            {
-                StrokeColor = Colors.Green,
-                StrokeWidth = 10
-            };
-
-            foreach (var point in fullRoutePoints)
-                _routeLine.Geopath.Add(point);
-
-            DriverMap.MapElements.Clear();
-            DriverMap.MapElements.Add(_routeLine);
-
-            // Centriraj mapu prema ruti
-            var center = new Location(
-                (fullRoutePoints.Min(p => p.Latitude) + fullRoutePoints.Max(p => p.Latitude)) / 2,
-                (fullRoutePoints.Min(p => p.Longitude) + fullRoutePoints.Max(p => p.Longitude)) / 2
-            );
-            var radius = Location.CalculateDistance(
-                new Location(fullRoutePoints.Min(p => p.Latitude), fullRoutePoints.Min(p => p.Longitude)),
-                new Location(fullRoutePoints.Max(p => p.Latitude), fullRoutePoints.Max(p => p.Longitude)),
-                DistanceUnits.Kilometers) / 2;
-
-            DriverMap.MoveToRegion(MapSpan.FromCenterAndRadius(center, Distance.FromKilometers(radius)));
-            EtaLabel.Text = "Ruta spremna!";
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Greška u ruti: {ex.Message}");
-            EtaLabel.Text = "Greška u učitavanju rute.";
-        }
+       
     }
 
     private async void InitializeRoute()
     {
         try
         {
-            var fullRoutePoints = new List<Location>();
+            DriverMap.Pins.Clear();
+            DriverMap.MapElements.Clear();
 
-            // 1. Ruta: Vozač → Korisnik
-            var driverToPickup = await GetRoutePointsAsync(_driverStart, _pickupLocation);
-            fullRoutePoints.AddRange(driverToPickup);
+            // 1. PINOVI
+            DriverMap.Pins.Add(new Pin { Label = "Vozač", Location = _driverStart, Type = PinType.SavedPin });
+            DriverMap.Pins.Add(new Pin { Label = "Korisnik", Location = _pickupLocation, Type = PinType.Place });
+            DriverMap.Pins.Add(new Pin { Label = "Destinacija", Location = _destination, Type = PinType.Place });
 
-            // 2. Ruta: Korisnik → Destinacija
-            var pickupToDest = await GetRoutePointsAsync(_pickupLocation, _destination);
-            fullRoutePoints.AddRange(pickupToDest);
-
-            _routeLine = new Polyline
+            // 2. PRVA DIONICA (vozač ➝ korisnik)
+            var route1 = await GetRoutePointsAsync(_driverStart, _pickupLocation);
+            var polyline1 = new Polyline
             {
-                StrokeColor = Colors.Green,
+                StrokeColor = Colors.DarkGreen,
                 StrokeWidth = 10
             };
+            foreach (var point in route1)
+                polyline1.Geopath.Add(point);
+            DriverMap.MapElements.Add(polyline1);
 
-            foreach (var point in fullRoutePoints)
-                _routeLine.Geopath.Add(point);
+            // 3. DRUGA DIONICA (korisnik ➝ destinacija)
+            var route2 = await GetRoutePointsAsync(_pickupLocation, _destination);
+            var polyline2 = new Polyline
+            {
+                StrokeColor = Colors.Red,
+                StrokeWidth = 5
+            };
+            foreach (var point in route2)
+                polyline2.Geopath.Add(point);
+            DriverMap.MapElements.Add(polyline2);
 
-            DriverMap.MapElements.Clear();
-            DriverMap.MapElements.Add(_routeLine);
+            // 4. Centriraj mapu prema sredini svih tačaka
+            var fullRoute = route1.Concat(route2).ToList();
+            if (route1.Count == 0)
+            {
+                EtaLabel.Text = "Nema rute od vozača do korisnika.";
+                return;
+            }
+
+            if (route2.Count == 0)
+            {
+                EtaLabel.Text = "Nema rute od korisnika do destinacije.";
+                return;
+            }
 
             var center = new Location(
-                (fullRoutePoints.Min(p => p.Latitude) + fullRoutePoints.Max(p => p.Latitude)) / 2,
-                (fullRoutePoints.Min(p => p.Longitude) + fullRoutePoints.Max(p => p.Longitude)) / 2
+                (fullRoute.Min(p => p.Latitude) + fullRoute.Max(p => p.Latitude)) / 2,
+                (fullRoute.Min(p => p.Longitude) + fullRoute.Max(p => p.Longitude)) / 2
             );
             var radius = Location.CalculateDistance(
-                new Location(fullRoutePoints.Min(p => p.Latitude), fullRoutePoints.Min(p => p.Longitude)),
-                new Location(fullRoutePoints.Max(p => p.Latitude), fullRoutePoints.Max(p => p.Longitude)),
-                DistanceUnits.Kilometers) / 2;
+                new Location(fullRoute.Min(p => p.Latitude), fullRoute.Min(p => p.Longitude)),
+                new Location(fullRoute.Max(p => p.Latitude), fullRoute.Max(p => p.Longitude)),
+                DistanceUnits.Kilometers
+            ) / 2;
 
-            DriverMap.MoveToRegion(MapSpan.FromCenterAndRadius(center, Distance.FromKilometers(radius)));
+            DriverMap.MoveToRegion(MapSpan.FromCenterAndRadius(center, Distance.FromKilometers(radius + 0.5)));
             EtaLabel.Text = "Ruta spremna!";
         }
         catch (Exception ex)
@@ -127,20 +104,29 @@ public partial class DriverTrackingPage : ContentPage
         }
     }
 
-    private async Task<List<Location>> GetRoutePointsAsync(Location origin, Location destination)
-    {
-        var httpClient = new HttpClient();
-        var url = $"https://maps.googleapis.com/maps/api/directions/json?origin={origin.Latitude},{origin.Longitude}&destination={destination.Latitude},{destination.Longitude}&mode=driving&key={_googleApiKey}";
-        var response = await httpClient.GetStringAsync(url);
-        var directions = JsonSerializer.Deserialize<DirectionsResponse>(response);
+   
 
-        if (directions?.Routes?.Count > 0)
-            return DecodePolyline(directions.Routes.First().OverviewPolyline.Points);
+private async Task<List<Location>> GetRoutePointsAsync(Location origin, Location destination)
+{
+    var httpClient = new HttpClient();
+    var originStr = $"{origin.Latitude.ToString(CultureInfo.InvariantCulture)},{origin.Longitude.ToString(CultureInfo.InvariantCulture)}";
+    var destinationStr = $"{destination.Latitude.ToString(CultureInfo.InvariantCulture)},{destination.Longitude.ToString(CultureInfo.InvariantCulture)}";
 
-        return new List<Location>();
-    }
+    var url = $"https://maps.googleapis.com/maps/api/directions/json?origin={originStr}&destination={destinationStr}&mode=driving&key={_googleApiKey}";
+    var response = await httpClient.GetStringAsync(url);
 
-    private List<Location> DecodePolyline(string encodedPoints)
+    Console.WriteLine("Google Directions API odgovor:");
+    Console.WriteLine(response);
+
+    var directions = JsonSerializer.Deserialize<DirectionsResponse>(response);
+
+    if (directions?.Routes?.Count > 0)
+        return DecodePolyline(directions.Routes.First().OverviewPolyline.Points);
+
+    return new List<Location>();
+}
+
+private List<Location> DecodePolyline(string encodedPoints)
     {
         var poly = new List<Location>();
         int index = 0, lat = 0, lng = 0;

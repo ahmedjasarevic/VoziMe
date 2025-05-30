@@ -26,7 +26,7 @@
                 <Image Grid.Column="0" Source="user_icon.png" HeightRequest="20" WidthRequest="20" VerticalOptions="Center" />
                 <Entry Grid.Column="1" 
                        x:Name="UsernameEntry"
-                       Placeholder="Ime i prezime"
+                       Placeholder="Email"
                        Style="{StaticResource EntryStyle}"
                        Margin="10,0,0,0" 
                        WidthRequest="300"/>

@@ -104,7 +104,7 @@ _locationService.GetCurrentLocationAsync();
                     Location = new Location(driver.Latitude, driver.Longitude),
                     Type = PinType.Place
                 };
-
+                driver.Price = "2KM";
                 LocationMap.Pins.Add(pin);
             }
         }
@@ -198,7 +198,12 @@ _locationService.GetCurrentLocationAsync();
         if (success)
         {
             await DisplayAlert("Uspjeh", "Vožnja naručena.", "OK");
-            await Navigation.PushAsync(new RideTrackingPage(selectedDriver, new Location(_currentLatitude, _currentLongitude), _userService.CurrentUser.Id));
+            await Navigation.PushAsync(new RideTrackingPage(
+                selectedDriver,
+                new Location(_currentLatitude, _currentLongitude), // start
+                loc,                              // end
+                _userService.CurrentUser.Id                       // currentUserId
+            ));
         }
         else
         {
@@ -282,6 +287,7 @@ client.GetStringAsync(url);
         if (e.CurrentSelection.FirstOrDefault() is Prediction selected)
         {
             SourceEntry.Text = selected.Description;
+            
             SourceSuggestions.IsVisible = false;
         }
     }
