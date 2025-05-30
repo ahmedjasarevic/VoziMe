@@ -118,9 +118,19 @@ private async Task<List<Location>> GetRoutePointsAsync(Location origin, Location
     Console.WriteLine("Google Directions API odgovor:");
     Console.WriteLine(response);
 
-    var directions = JsonSerializer.Deserialize<DirectionsResponse>(response);
+        var directions = JsonSerializer.Deserialize<DirectionsResponse>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
 
-    if (directions?.Routes?.Count > 0)
+        if (directions?.Routes == null || directions.Routes.Count == 0 || directions.Routes.First().OverviewPolyline == null)
+        {
+            Console.WriteLine("Greška: Nepotpuni podaci iz API-ja.");
+            return new List<Location>();
+        }
+
+
+        if (directions?.Routes?.Count > 0)
         return DecodePolyline(directions.Routes.First().OverviewPolyline.Points);
 
     return new List<Location>();

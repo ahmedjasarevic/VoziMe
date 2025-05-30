@@ -242,6 +242,19 @@ namespace VoziMe.Services
         {
             _currentUser = null;
         }
+        public async Task LogoutAsync()
+        {
+            // Ovdje izbriši lokalno spremljenog korisnika
+            _currentUser = null;
+
+            // Ako koristiš Preferences za spremanje tokena:
+            Preferences.Remove("user_id");
+            Preferences.Remove("auth_token");
+
+            // Možeš dodati i druge cleanup logike ako treba
+            await Task.CompletedTask;
+        }
+
 
         // Ovo je dodatna metoda za povratak connection string-a (ako trebaš)
         public string GetConnectionString()

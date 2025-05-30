@@ -74,6 +74,16 @@
                    HorizontalOptions="Center"
                    IsVisible="True" />
 
+            <Button Text="Odjavi se"
+        x:Name="btnLogout"
+        Clicked="btnLogout_Clicked"
+        HorizontalOptions="Center"
+        BackgroundColor="DarkRed"
+        TextColor="White"
+        CornerRadius="8"
+        HeightRequest="45" />
+
+
         </StackLayout>
     </ScrollView>
 </ContentPage>

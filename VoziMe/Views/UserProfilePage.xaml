@@ -45,8 +45,15 @@
                         <Label x:Name="lblEmail"
                    FontSize="16"
                    TextColor="White" />
+            <Button Text="Odjavi se"
+        x:Name="btnLogout"
+        Clicked="btnLogout_Clicked"
+        HorizontalOptions="Center"
+        BackgroundColor="DarkRed"
+        TextColor="White"
+        CornerRadius="8"
+        HeightRequest="45" />
 
-                        <!-- Možeš dodati još polja ako želiš -->
 
         </StackLayout>
     </ScrollView>
