@@ -7,7 +7,7 @@ namespace VoziMe
     {
         public AppShell(User loggedInUser)
         {
-            Shell.SetNavBarIsVisible(this, false); // Sakrij Shell navbar
+            Shell.SetNavBarIsVisible(this, false); 
 
             var tabBar = new TabBar();
 
@@ -16,14 +16,13 @@ namespace VoziMe
 
             if (loggedInUser.UserType == UserType.Driver)
             {
-                // Proslijedi UserId kao driverId kroz konstruktor
                 homeContent = new ShellContent
                 {
                     Title = "Početna",
                     Icon = "home.png",
                     ContentTemplate = new DataTemplate(() =>
                     {
-                        return new DriverHomePage(loggedInUser.Id); // Proslijedi ID odmah
+                        return new DriverHomePage(loggedInUser.Id);
                     })
                 };
 
@@ -33,7 +32,7 @@ namespace VoziMe
                     Icon = "profile.png",
                     ContentTemplate = new DataTemplate(() =>
                     {
-                        return new DriverProfilePage(); // ne treba ništa slati
+                        return new DriverProfilePage(); 
                     })
                 };
 
@@ -46,7 +45,7 @@ namespace VoziMe
                     Icon = "home.png",
                     ContentTemplate = new DataTemplate(() =>
                     {
-                        return new DriverSelectionPage(); // Ako koristi korisnički ID
+                        return new DriverSelectionPage(); 
                     })
                 };
 
@@ -56,7 +55,7 @@ namespace VoziMe
                     Icon = "profile.png",
                     ContentTemplate = new DataTemplate(() =>
                     {
-                        return new UserProfilePage(); // Ako koristi ID
+                        return new UserProfilePage();
                     })
                 };
             }
