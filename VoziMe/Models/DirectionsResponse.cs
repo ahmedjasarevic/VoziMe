@@ -7,7 +7,7 @@ namespace VoziMe.Models
         [JsonPropertyName("routes")]
         public List<Route> Routes { get; set; }
 
-        // Dodajemo BoundingBox ako je prisutan u odgovoru
+        
         [JsonPropertyName("bounding_box")]
         public BoundingBox BoundingBox { get; set; }
     }
@@ -24,16 +24,16 @@ namespace VoziMe.Models
         public string Points { get; set; }
     }
 
-    // Klasa za BoundingBox koji sadrži informacije o koordinatama
+    
     public class BoundingBox
     {
         [JsonPropertyName("northeast")]
-        public LatLng Northeast { get; set; }  // Gornji desni kut
+        public LatLng Northeast { get; set; }  
 
         [JsonPropertyName("southwest")]
-        public LatLng Southwest { get; set; }  // Donji lijevi kut
+        public LatLng Southwest { get; set; }  
 
-        // Konstruktor za BoundingBox sa četiri argumenta
+        
         public BoundingBox(double northeastLat, double northeastLng, double southwestLat, double southwestLng)
         {
             Northeast = new LatLng { Latitude = northeastLat, Longitude = northeastLng };
@@ -41,7 +41,7 @@ namespace VoziMe.Models
         }
     }
 
-    // Klasa za LatLng (Latitude & Longitude)
+    
     public class LatLng
     {
         [JsonPropertyName("lat")]
