@@ -14,7 +14,7 @@ namespace VoziMe.Services
 
         private readonly string _connectionString;
 
-        public DriverService(NpgsqlConnection connection)  // Pass it in the constructor
+        public DriverService(NpgsqlConnection connection)  
         {
             _connectionString = connection.ConnectionString;
         }
@@ -238,8 +238,8 @@ namespace VoziMe.Services
 
         private string CalculatePrice(double distanceKm)
         {
-            var basePrice = 2.0; // Base fare in KM
-            var pricePerKm = 1.5; // Price per km in KM
+            var basePrice = 2.0; 
+            var pricePerKm = 1.5; 
 
             var totalPrice = basePrice + (distanceKm * pricePerKm);
             return $"{Math.Round(totalPrice)}KM";
@@ -262,7 +262,7 @@ namespace VoziMe.Services
 
                 await command.ExecuteNonQueryAsync();
 
-                // 2. (Opcionalno) Osvježi zadnju vožnju kao završenu
+                // 2.Osvježi zadnju vožnju kao završenu
                 var updateRideCommand = connection.CreateCommand();
                 updateRideCommand.CommandText = @"
                 UPDATE Rides
