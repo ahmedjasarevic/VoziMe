@@ -15,7 +15,6 @@ namespace VoziMe.Services
         public const string FolderPath = "profilne";
 
 
-        // Koristi svoj pravi connection string
         public UserService()
         {
             _connectionString = "User Id=postgres.vfqrsstbgqfwukfgslyo;Password=SanidMuhic123;Server=aws-0-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres";
@@ -33,7 +32,7 @@ namespace VoziMe.Services
                 await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                // Select only the needed fields
+                
                 var command = new NpgsqlCommand(
                     "SELECT Id, Name, Email, PasswordHash, UserType, ProfileImage FROM Users WHERE Email = @Email AND UserType = @UserType",
                     connection);
@@ -45,7 +44,7 @@ namespace VoziMe.Services
                 {
                     var storedHash = reader.GetString(reader.GetOrdinal("PasswordHash"));
 
-                    // Verify password without reading unnecessary data
+                   
                     if (BCrypt.Net.BCrypt.Verify(password, storedHash))
                     {
                         _currentUser = new User
@@ -163,7 +162,7 @@ namespace VoziMe.Services
                 return null;
             }
 
-            // Dohvati korisnika iz baze prema njegovom ID-u
+            // korisnika iz baze prema  ID-u
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
@@ -249,19 +248,19 @@ namespace VoziMe.Services
         }
         public async Task LogoutAsync()
         {
-            // Ovdje izbriši lokalno spremljenog korisnika
+            
             _currentUser = null;
 
-            // Ako koristiš Preferences za spremanje tokena:
+           
             Preferences.Remove("user_id");
             Preferences.Remove("auth_token");
 
-            // Možeš dodati i druge cleanup logike ako treba
+            
             await Task.CompletedTask;
         }
 
 
-        // Ovo je dodatna metoda za povratak connection string-a (ako trebaš)
+       
         public string GetConnectionString()
         {
             return _connectionString;
