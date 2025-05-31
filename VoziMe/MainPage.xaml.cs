@@ -11,7 +11,6 @@ public partial class MainPage : ContentPage
 {
     private readonly DatabaseService _databaseService;
 
-    // Inject DatabaseService using constructor dependency injection
     public MainPage(DatabaseService databaseService)
     {
         InitializeComponent();
