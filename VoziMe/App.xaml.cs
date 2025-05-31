@@ -12,10 +12,8 @@ public partial class App : Application
         InitializeComponent();
         _databaseService = databaseService;
 
-        // Initialize database
         InitializeDatabase();
 
-        // Start with splash screen, using DI to get DatabaseService for SplashPage
         MainPage = new NavigationPage(new SplashPage(_databaseService))
         {
             BarBackgroundColor = Colors.Black,
@@ -31,7 +29,6 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            // Log error or show message
             Console.WriteLine($"Database initialization error: {ex.Message}");
         }
     }
