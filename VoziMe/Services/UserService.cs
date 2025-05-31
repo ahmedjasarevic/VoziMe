@@ -9,6 +9,11 @@ namespace VoziMe.Services
     public class UserService
     {
         private readonly string _connectionString;
+        public const string SupabaseUrl = "https://vfqrsstbgqfwukfgslyo.supabase.co";
+        public const string SupabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmcXJzc3RiZ3Fmd3VrZmdzbHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwMjM2NTIsImV4cCI6MjA2MTU5OTY1Mn0.JdvWKRstpHivjmG7DpkwoxvyIxON_yey7P_mfY8KVgg"; // zamijeni s pravim anon ključem
+        public const string BucketName = "slike";
+        public const string FolderPath = "profilne";
+
 
         // Koristi svoj pravi connection string
         public UserService()

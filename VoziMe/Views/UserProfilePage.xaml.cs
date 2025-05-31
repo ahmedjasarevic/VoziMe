@@ -2,7 +2,10 @@
 using VoziMe.Services;
 using Microsoft.Maui.Controls;
 using System;
+using System.IO;
 using System.Threading.Tasks;
+using Supabase;
+using FileAccess = System.IO.FileAccess;
 
 namespace VoziMe.Views
 {
@@ -17,6 +20,14 @@ namespace VoziMe.Views
             LoadUserProfile();
         }
 
+        private string GetProfileImageUrl(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return "profile_placeholder.png";
+
+            return $"{UserService.SupabaseUrl}/storage/v1/object/public/{UserService.BucketName}/{UserService.FolderPath}/{fileName}";
+        }
+
         private async void LoadUserProfile()
         {
             try
@@ -27,7 +38,7 @@ namespace VoziMe.Views
                 {
                     lblName.Text = currentUser.Name;
                     lblEmail.Text = currentUser.Email;
-                    profileImage.Source = currentUser.ProfileImage ?? "profile_placeholder.png";
+                    profileImage.Source = ImageSource.FromUri(new Uri(GetProfileImageUrl(currentUser.ProfileImage)));
                 }
                 else
                 {
@@ -53,10 +64,28 @@ namespace VoziMe.Views
                 if (result != null)
                 {
                     using var stream = await result.OpenReadAsync();
-                    profileImage.Source = ImageSource.FromStream(() => stream);
+                    using var memoryStream = new MemoryStream();
+                    await stream.CopyToAsync(memoryStream);
+                    byte[] fileBytes = memoryStream.ToArray();
 
-                    // Pretpostavka: UserService ima metodu za update slike korisnika
-                    await _userService.UpdateProfileImageAsync(_userService.CurrentUser.Id, result.FileName);
+                    var supabaseClient = new Supabase.Client(UserService.SupabaseUrl, UserService.SupabaseKey);
+                    await supabaseClient.InitializeAsync();
+
+                    string fileName = $"{_userService.CurrentUser.Id}_{result.FileName}";
+                    string fullPath = $"{UserService.FolderPath}/{fileName}";
+
+                    var bucket = supabaseClient.Storage.From(UserService.BucketName);
+                    var uploadResponse = await bucket.Upload(fileBytes, fullPath, new Supabase.Storage.FileOptions
+                    {
+                        Upsert = true,
+                        ContentType = result.ContentType
+                    });
+
+                    // Ažuriraj korisnika u bazi
+                    await _userService.UpdateProfileImageAsync(_userService.CurrentUser.Id, fileName);
+
+                    // Prikaz nove slike
+                    profileImage.Source = ImageSource.FromUri(new Uri(GetProfileImageUrl(fileName)));
 
                     await DisplayAlert("Uspjeh", "Profilna slika je ažurirana.", "U redu");
                 }
@@ -76,23 +105,13 @@ namespace VoziMe.Views
 
             try
             {
-                // Očisti podatke o korisniku
                 await _userService.LogoutAsync();
-
-                // Vrati korisnika na login stranicu
-
                 Application.Current.MainPage = new NavigationPage(new WelcomePage());
-
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Greška", $"Neuspjela odjava: {ex.Message}", "U redu");
             }
         }
-
-
     }
 }
-
-
-
