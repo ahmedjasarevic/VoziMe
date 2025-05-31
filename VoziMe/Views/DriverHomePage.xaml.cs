@@ -51,7 +51,6 @@ public partial class DriverHomePage : ContentPage
         
 
 
-        // Initialize the map first
         InitializeMap();
         _ = LoadDriverDataAndAvailability();
     }
@@ -66,7 +65,6 @@ public partial class DriverHomePage : ContentPage
             {
                 _driverId = _driver.Id;
                 _isAvailable = _driver.IsAvailable;
-                // Initialize Supabase client asynchronously
                 Task.Run(async () => await InitializeSupabaseClientAsync());
 
             }
@@ -86,7 +84,6 @@ public partial class DriverHomePage : ContentPage
         {
             if (_supabaseClient == null)
             {
-                // Kreiraj Supabase klijent
                 _supabaseClient = new Supabase.Client(
                     "https://vfqrsstbgqfwukfgslyo.supabase.co",
                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmcXJzc3RiZ3Fmd3VrZmdzbHlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwMjM2NTIsImV4cCI6MjA2MTU5OTY1Mn0.JdvWKRstpHivjmG7DpkwoxvyIxON_yey7P_mfY8KVgg",
@@ -95,31 +92,25 @@ public partial class DriverHomePage : ContentPage
                         AutoConnectRealtime = true
                     });
 
-                // Inicijalizuj Supabase klijent
                 await _supabaseClient.InitializeAsync();
 
                 _supabaseClient.Realtime.AddDebugHandler((sender, message, ex) =>
                 {
                     try
                     {
-                        // Loguj celu poruku da vidiš šta dolazi
                         Console.WriteLine($"Realtime Debug: {message}");
 
-                        // Pronađi poziciju prvog '{' karaktera
                         int jsonStartIndex = message.IndexOf('{');
                         if (jsonStartIndex != -1)
                         {
-                            // Izdvojimo samo deo koji je validan JSON
                             string jsonMessage = message.Substring(jsonStartIndex);
 
-                            // Pokušaj da parsiraš JSON
                             using (var jsonDoc = JsonDocument.Parse(jsonMessage))
                             {
                                 var payload = jsonDoc.RootElement.GetProperty("payload");
                                 var data = payload.GetProperty("data");
                                 var record = data.GetProperty("record");
 
-                                // Ekstraktuj relevantne podatke
                                 var driverId = record.GetProperty("driverid").GetInt32();
                                 var customerId = record.GetProperty("customerid").GetInt32();
                                 var sourceLatitude = record.GetProperty("sourcelatitude").GetDouble();
@@ -135,16 +126,13 @@ public partial class DriverHomePage : ContentPage
 
                                 Console.WriteLine($"Primljeni driverid: {driverId}");
 
-                                // Ako je vožnja namijenjena trenutnom vozaču
                                 if (driverId == _driverId && !_rideHandled)
                                 {
-                                    // Ažuriranje vožnje
                                     _pickupLocation = new Location(sourceLatitude, sourceLongitude);
                                     var destinationLocation = new Location(destinationLatitude, destinationLongitude);
                                     _rideHandled = true;
 
 
-                                    // Pokretanje RideTrackingPage sa odgovarajućim podacima
                                     MainThread.BeginInvokeOnMainThread(async () =>
                                     {
                                         await DisplayAlert("Odabrani ste za vožnju", $"Nova vožnja je zakazana od {sourceAddress} do {destinationAddress}.", "OK");
@@ -164,7 +152,6 @@ public partial class DriverHomePage : ContentPage
                         else
                         {
 
-                            // Ako ne možeš da nađeš '{', onda nije validan JSON
                             Console.WriteLine("Poruka nije validan JSON!");
                         }
                     }
@@ -174,7 +161,6 @@ public partial class DriverHomePage : ContentPage
                     }
                 });
 
-                // Pretplati se na kanal
                 var realtimeChannel = _supabaseClient.Realtime.Channel("realtime", "public", "rides");
                 await realtimeChannel.Subscribe();
                 Console.WriteLine("Uspešno pretplaćen na rides kanal!");
@@ -193,7 +179,6 @@ public partial class DriverHomePage : ContentPage
         base.OnAppearing();
         await LoadDriverAvailability();
 
-        // Only subscribe if client is initialized
         if (_supabaseClient?.Realtime != null)
         {
             await SubscribeToRides();
@@ -212,29 +197,23 @@ public partial class DriverHomePage : ContentPage
     {
         try
         {
-            // Provjeri da li je klijent spreman
             if (_supabaseClient?.Realtime == null)
             {
                 Console.WriteLine("Realtime nije dostupan!");
                 return;
             }
 
-            // Kreiraj kanal za "rides" tabelu
             _realtimeChannel = _supabaseClient.Realtime.Channel("realtime", "public", "rides");
 
-            // Registruj Postgres Changes
             _realtimeChannel.Register(new PostgresChangesOptions("public", "rides"));
 
-            // Dodaj handler za sve promjene
             _realtimeChannel.AddPostgresChangeHandler(ListenType.All, (sender, change) =>
             {
                 try
                 {
-                    // Ekstraktuj JSON podatke
                     var payloadJson = JsonSerializer.Serialize(change.Payload.Data.Record);
                     var jsonDoc = JsonDocument.Parse(payloadJson);
 
-                    // Provjeri da li postoji driverid
                     if (jsonDoc.RootElement.TryGetProperty("driverid", out var driverIdJson))
                     {
                         int driverId = driverIdJson.GetInt32();
@@ -242,7 +221,6 @@ public partial class DriverHomePage : ContentPage
                         Console.WriteLine($"Primljeni driverid: {driverId}");
                         Console.WriteLine($"Trenutni driverId: {_driverId}");
 
-                        // Ako je vožnja namijenjena trenutnom vozaču
                         if (driverId == _driverId)
                         {
                             MainThread.BeginInvokeOnMainThread(async () =>
